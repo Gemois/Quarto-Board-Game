@@ -43,3 +43,14 @@ td #table_content {
   right: 0;
   background: gold;
 }
+
+#quarto_table td {
+  width: 10em; 
+  height:10em;
+  border:1px solid black;
+  text-align:center;
+}
+
+#quarto_table {
+  border-collapse: collapse;
+}
