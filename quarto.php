@@ -61,40 +61,46 @@ function handle_board($method,$input) {
 
 
 function handle_piece($method,$piece_id,$input) {
-	if($method=='GET') {
-        show_piece($piece_id);
-    } else if ($method=='PUT') {
-		place_piece($piece_id,$input['x'],$input['y'],$input['token']);
-    }    
+
+  switch ($b=array_shift($request)) {
+      
+    case pick: if($method=='PUT'){
+                    pick_piece($input['piece_id']);
+              }else{header("HTTP/1.1 400 Bad Request"); 
+                    print json_encode(['errormesg'=>"Method $method not allowed here."]
+               }
+                break;
+
+    case place: if($method=='GET') {
+                    show_piece($input['x'],$input['y']);
+               }else if ($method=='PUT') {
+		                place_piece($input['x'],$input['y'],$input['token']);
+               } 
+              break;
+  }
 }
 
-
-
-
-/*
-Alternative : without piece presentation only the placement
-[in case i use only select menu input at the gui ]
-
-
-function handle_piece($method,$input) {
-	if($method=='GET') {
-        header("HTTP/1.1 404 Not Found");
-    } else if ($method=='PUT') {
-		place_piece($input['piece_id'],$input['x'],$input['y'],$input['token']);    
-    }    
-}
-
-!! note : in this scenario i can enclose piece_id in the post body
-and remove it from the handle_player args in the switch . 
-*/
 
 
 
 
 function handle_player($method, $request,$input) {
-
+	switch ($b=array_shift($request)) {
+		case '':
+		case null: if($method=='GET') {show_users($method);}
+				   else {header("HTTP/1.1 400 Bad Request"); 
+            print json_encode(['errormesg'=>"Method $method not allowed here."]);    
+            }
+                    break;
+  
+    case login:  handle_user($method,$input);
+                  break; 
+    default:  header("HTTP/1.1 404 Not Found");
+				      print json_encode(['errormesg'=>"Player $b not found."]);
+                 break;
+	}
 }
-
+ 
 
 
 ?>
