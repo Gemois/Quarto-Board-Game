@@ -66,8 +66,8 @@ function handle_piece($method,$piece_id,$input) {
       
     case pick: if($method=='PUT'){
                     pick_piece($input['piece_id']);
-              }else{header("HTTP/1.1 400 Bad Request"); 
-                    print json_encode(['errormesg'=>"Method $method not allowed here."]
+              }else{
+                      piece_list();
                }
                 break;
 

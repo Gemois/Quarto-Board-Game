@@ -89,11 +89,84 @@ function do_place() {
 
 
 
+function move_result(data){
+	game_status_update();
+
+}
 
 
 
 
 
+
+
+
+function piece_list() {
+
+	$.ajax({url: "chess.php/board/pick", 
+	headers: {"X-Token": me.token},
+	success: update_piece_selector});
+
+
+}
+
+
+
+
+function update_piece_selector(list){
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+function do_pick(piece){
+
+	var s = $('#piece_coordinates').val();
+
+
+	$.ajax({url: "chess.php/board/piece/pick/", 
+			method: 'PUT',
+			dataType: "json",
+			contentType: 'application/json',
+			data: JSON.stringify( {piece_id:piece}),
+			headers: {"X-Token": me.token},
+			success: pick_result,
+			error: login_error});
+
+
+
+}
+
+
+
+
+
+
+
+
+
+function pick_result(data) {
+	me = data[0];
+	
+
+	update_info();
+	game_status_update();
+}
+
+function pick_error(data,y,z,c) {
+	var x = data.responseJSON;
+	alert(x.errormesg);
+}
 
 
 
