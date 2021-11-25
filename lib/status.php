@@ -1,48 +1,56 @@
 
 <?php
 
-function show_status() {
-	
+/**
+ * prints game status table 
+ * @return json prints table data  [status , p_turn , current_piece , result , last_change]
+ */
+
+function show_status() {	
 	global $mysqli;
-	
 	check_abort();
-	
 	$sql = 'select * from game_status';
 	$st = $mysqli->prepare($sql);
-
 	$st->execute();
 	$res = $st->get_result();
-
 	header('Content-type: application/json');
 	print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
 
 }
 
-
-
-
+/**
+ * reads game status 
+ * @return array $status  
+ * table data  [status , p_turn , current_piece , result , last_change]*
+ */
 
 function read_status() {
-	global $mysqli;
-	
+	global $mysqli;	
 	$sql = 'select * from game_status';
 	$st = $mysqli->prepare($sql);
-
 	$st->execute();
 	$res = $st->get_result();
 	$status = $res->fetch_assoc();
 	return($status);
 }
 
-
+/**
+ * checks if game has been aborted  
+ * in case game has been aborted updates status
+ */
 function check_abort() {
 	
 }
 
+/**
+ * updates game status table   
+ * 
+ * checks all possible scenarios and sets the appropriate status 
+ * status can be either ( active , initialized , started , ended , aborded )
+ */
 
 function update_game_status() {
 	global $mysqli;
-
 	$status = read_status();
 	$new_status=null;
 	$new_turn=null;
@@ -59,14 +67,11 @@ function update_game_status() {
 			$new_status='aborted';
 		}
 	}
-
-	
 	$sql = 'select count(*) as c from players where username is not null';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
 	$active_players = $res->fetch_assoc()['c'];
-	
 	
 	switch($active_players) {
 		case 0: $new_status='not active'; 
@@ -81,9 +86,6 @@ function update_game_status() {
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('ss',$new_status,$new_turn);
 	$st->execute();
-	
-	
-	
 }
 
 ?>
