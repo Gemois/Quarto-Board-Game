@@ -1,20 +1,21 @@
 <?php
 
-		
+/**
+ * prints board
+ * @param json $input 
+ * prints board using json format 
+ */
+
 function show_board($input) {
 		header('Content-type: application/json');
 		print json_encode(read_board(), JSON_PRETTY_PRINT);
 }
 
-
-
-function reset_board() {
-	global $mysqli;
-	$sql = 'call clean_board()';
-	$mysqli->query($sql);
-	
-}
-
+/**
+ * reads board table
+ * @return array with table contents
+ *  table data (x , y , piece)
+ */
 
 function read_board() {
 	global $mysqli;
@@ -25,46 +26,23 @@ function read_board() {
 	return($res->fetch_all(MYSQLI_ASSOC));
 }
 
+/**
+ * resets board 
+ * calls mysql store procidure  to reset all board rows 
+ */
 
-
-// piece selector 
-
-function pick_piece($piece_id,$input){
-
-
-	if($token==null || $token=='') {
-		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"token is not set."]);
-		exit;
-	}
-	$player_id = current_player($token);
-	if($player_id==null ) {
-		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"You are not a player of this game."]);
-		exit;
-	}
-	$status = read_status();
-	if($status['status']!='started') {
-		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"Game is not in action."]);
-		exit;
-	}
-	if($status['p_turn']!=$player_id) {
-		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"It is not your turn."]);
-		exit;
-	}
-    if(check_available_piece($piece_id)){
-        do_pick_piece($x,$y);
-    }
-	header("HTTP/1.1 400 Bad Request");
-	print json_encode(['errormesg'=>"You cant place your piece here."]);
-	exit;
-
+function reset_board() {
+	global $mysqli;
+	$sql = 'call clean_board()';
+	$mysqli->query($sql);
+	
 }
 
-
-
+/**
+ * prints the available pieces
+ * availability can be true or false
+ * @return json  all pieces_id 
+ */
 
 function piece_list(){
     global $mysqli;
@@ -76,58 +54,70 @@ function piece_list(){
     print json_encode($res, JSON_PRETTY_PRINT);
 }
 
+/**
+ * checks if player meets all requirmets to pick piece
+ * @param $input json  
+ * and then calls do_pick_piece
+ */ 
 
-
-
-
-
-
-//checks if the piece we chose is available     [ note : maybe i dont need this function  ]
-
-
-function check_available_piece($piece_id){
-    global $mysqli;
-
-    $sql = 'SELECT available from pieces where pieces_id=$piece_id';
-    $st = $mysqli->prepare($sql);
-    $st->execute();
-    $res =$st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
-
-if ($res){
-    return true;
-}else 
-return false;
+function pick_piece($input){
+	if($input['token']==null || $input['username']=='') {
+		header("HTTP/1.1 400 Bad Request");
+		print json_encode(['errormesg'=>"token is not set."]);
+		exit;
+	}
+	$status = read_status();
+	if($status['status']!='started') {
+		header("HTTP/1.1 400 Bad Request");
+		print json_encode(['errormesg'=>"Game is not in action."]);
+		exit;
+	}
+	if($status['p_turn']!=$input['token']) {
+		header("HTTP/1.1 400 Bad Request");
+		print json_encode(['errormesg'=>"It is not your turn."]);
+		exit;
+	}
+    do_pick_piece($input['piece_id']);
 }
 
-
-//changes the availability of the piece , sets the current piece  and sets the next player .
+/**
+ * picks the piece for other player to place
+ * @param int $piece_id contains the id of the piece
+ * id is [1-16] 
+ * calls make_piece_unavelable
+ * calls set_current_piece
+ */ 
 
 function do_pick_piece($piece_id){
     make_piece_unavelable($piece_id);
     set_current_piece($piece_id);
+
     global $mysqli;
     $next_player=next_player($token);
     $sql = 'UPDATE game_status SET p_turn=? WHERE pieces_id=piece_id;';
     $st = $mysqli->prepare($sql);
     $st->bind_param('i',$next_player);
     $st->execute();
+    
 }
 
 
-//makes a piece unvalaible for the rest of the game
+/**
+ * flags chosen piece unvelable to pick
+ * @param int $piece_id contains the id of the piece
+ */ 
 
 function make_piece_unavelable($piece_id){
-
     global $mysqli;
     $sql = 'UPDATE pieces SET available="false" WHERE pieces_id=piece_id;';
     $st = $mysqli->prepare($sql);
     $st->execute();
-
 }
 
-
-//stores the piece about to be played
+/**
+ * stores in game status table the piece about to be played for the next player
+ * @param int $piece_id contains the id of the piece
+ */ 
 
 function set_current_piece($piece_id){
     global $mysqli;
@@ -137,36 +127,28 @@ function set_current_piece($piece_id){
     $st->execute();
 }
 
+/**
+ * sets user role to place
+ * @param string $token user unique identifier
+ */ 
 
-//returns next player id
-
-function next_player($token){
-
+function change_role_place($token){
     global $mysqli;
-    $sql = 'SELECT user_id from users where token!=$token';
+    $sql = 'UPDATE users SET role="place" WHERE token=$token' ;
     $st = $mysqli->prepare($sql);
     $st->execute();
-    $res =$st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
-    return $res;
 }
 
+/**
+ * checks if player meets all requirmets to place piece
+ * @param $input json  
+ * and then calls do_place_piece
+ */ 
 
-// ckecks all the restraints in order to place the  piece on the board 
-
-
-function place_piece($x,$y,$token) {
-	
-	if($token==null || $token=='') {
+function place_piece($input) {
+	if($input['token']==null || $input['token']=='') {
 		header("HTTP/1.1 400 Bad Request");
 		print json_encode(['errormesg'=>"token is not set."]);
-		exit;
-	}
-	
-	$player_id = current_player($token);
-	if($player_id==null ) {
-		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"You are not a player of this game."]);
 		exit;
 	}
 	$status = read_status();
@@ -175,12 +157,11 @@ function place_piece($x,$y,$token) {
 		print json_encode(['errormesg'=>"Game is not in action."]);
 		exit;
 	}
-	if($status['p_turn']!=$player_id) {
+	if($status['p_turn']!=$input['token']) {
 		header("HTTP/1.1 400 Bad Request");
 		print json_encode(['errormesg'=>"It is not your turn."]);
 		exit;
 	}
-	
 	if(!check_empty_box($x,$y)){
         do_place_piece($x,$y);
     }
@@ -188,59 +169,53 @@ function place_piece($x,$y,$token) {
 	print json_encode(['errormesg'=>"You cant place your piece here."]);
 	exit;
 }
-		
 
+/**
+ * check if board square is empty
+ * square can contain either null or piece_id
+ * @param int $x horisontal axis
+ * @param int $y vertical axis
+ * @return boolean 
+ */ 
 
+function check_empty_square($x,$y){
+    global $mysqli;
+	$sql = 'select piece from player where x=?and y=?';
+	$st = $mysqli->prepare($sql);
+    $st->bind_param('ii',$x,$y);
+	$st->execute();
+	$res =$st->get_result();
+    if($res){
+        return false ;
+    }else{
+        return true;
+    }
+}
 
-
-// executes the placement ont the piece on the board 
+/**
+ * picks the piece for other player to place
+ * @param int $piece_id contains the id of the piece
+ * id is [1-16] 
+ * calls curent_selected_piece
+ * calls change_role
+ */ 
 
 function do_place_piece($x,$y){
-
     $piece_id =curent_selected_piece();
-
         global $mysqli;
         $sql = 'call `place_piece`(?,?,?);';
         $st = $mysqli->prepare($sql);
         $st->bind_param('iii',$x,$y,$piece_id );
         $st->execute();
+        change_role_to_pick($token);
         header('Content-type: application/json');
         print json_encode(read_board(), JSON_PRETTY_PRINT);
-    
-    change_role($token);
 }
 
-
-
-//changes the role of the user to his current role , in this case pick 
-
-function change_role_pick($token){
-
-
-    global $mysqli;
-    $sql = 'UPDATE users SET role="pick"' ;
-    $st = $mysqli->prepare($sql);
-    $st->execute();
-}
-
-
-//changes the role of the user to his current role , in this case place 
-
-
-
-function change_role_place($token){
-
-
-    global $mysqli;
-    $sql = 'UPDATE users SET role="place"' ;
-    $st = $mysqli->prepare($sql);
-    $st->execute();
-}
-
-
-
-//retrieves and returns the selected pice to be played
-
+/**
+ * finds current selected piece from game status table
+ * @return int $res is piece_id
+ */ 
 
 function curent_selected_piece(){
 
@@ -253,20 +228,29 @@ function curent_selected_piece(){
     return $res;
 }
 
+/**
+ * sets user role to pick
+ * @param string $token user unique identifier
+ */ 
 
-
-//retrieves and returns the role [pick / place ] of the user 
- 
-
-
-function current_role($token){
-
+function change_role_to_pick($token){
     global $mysqli;
-	$sql = 'select role from player where token=?';
-	$st = $mysqli->prepare($sql);
-    $st->bind_param('s',$token);
-	$st->execute();
-	$res =$st->get_result();
+    $sql = 'UPDATE users SET role="pick" WHERE token=$token' ;
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+}
+
+/**
+ * finds the next player and stores the information to game status table
+ * @param string $token user unique identifier
+ */
+
+function next_player($token){
+    global $mysqli;
+    $sql = 'UPDATE game_status SET p_turn where token!=$token';
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $res =$st->get_result();
     $res->fetch_row(MYSQLI_ASSOC);
     return $res;
 }
@@ -274,29 +258,11 @@ function current_role($token){
 
 
 
-//checks if the box is empty  [ legal to place ]
-
-
-function check_empty_box($x,$y){
-    global $mysqli;
-	$sql = 'select piece from player where x=?and y=?';
-	$st = $mysqli->prepare($sql);
-    $st->bind_param('ii',$x,$y);
-	$st->execute();
-	$res =$st->get_result();
-    if($res){
-        return false ;
-    }else{
-    return true;
-    }
-}
-
 
 
 
 
 // check after winning placement of a piece
-
 
 function check_winning_placement($x,$y){
 
@@ -379,7 +345,6 @@ return false;
 }
 }
 
-
 // returns the values of the row with the last piece placement
 
 function horisontal_pieces($x,$y){
@@ -398,7 +363,6 @@ return $res;
 
 // returns the valus of the column with the last piece placement
 
-
 function vertical_pieces($x,$y){
 
 
@@ -415,11 +379,7 @@ function vertical_pieces($x,$y){
     return $res;
 }
 
-
-
-
 // returns the values of the primary diagonal with the last piece placement
-
 
 function check_left_diagonal_pieces($x,$y){
     if ($x=$y){
@@ -443,7 +403,6 @@ function check_left_diagonal_pieces($x,$y){
 }
 
 // returns the values of the secondary diagonal with the last piece placement
-
 
 function check_right_diagonal_pieces($x,$y){
     if ($x+$y=4){

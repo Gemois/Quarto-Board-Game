@@ -80,7 +80,7 @@ function handle_board($method,$input) {
 function handle_piece($method,$input) {
   switch ($b=array_shift($request)) {
     case pick: if($method=='PUT'){
-                    pick_piece($input['piece_id']);
+                    pick_piece($input);
                }
                else{
                       piece_list();
@@ -90,7 +90,7 @@ function handle_piece($method,$input) {
                     show_piece($input['x'],$input['y']);
                 }
                 else if ($method=='PUT') {
-		                place_piece($input['x'],$input['y'],$input['token']);
+		                place_piece($input);
                 } 
                 break;
   }
