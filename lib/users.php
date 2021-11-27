@@ -24,7 +24,7 @@ function show_users() {
 
 function show_user($token) {
 	global $mysqli;
-	$sql = 'select username from players where token=?';
+	$sql = 'select username,token,role from players where token=?';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('s',$token);
 	$st->execute();

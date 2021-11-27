@@ -1,10 +1,9 @@
-
-var me = { username: null, token: null };
+var me = { username: null, token: null ,role: null};
 
 
 
 $(function () {
-	raw_empty_board();
+	draw_empty_board();
 
 
 
@@ -12,26 +11,27 @@ $(function () {
 
 });
 
+/**
+ * draws board on webpage
+ * creates table and inserts it in a div dynamically 
+ */
 
 function draw_empty_board() {
-
-
 	var t = '<table id="quarto_table">';
 	for (var i = 4; i > 0; i--) {
 		t += '<tr>';
 		for (var j = 1; j <= 4; j++) {
-			t += '<td class="quarto_square" id="square_' + i + '_' + j + '">' + i + ',' + j + '</td>';
+			t += '<td class="quarto_square" id="square_' + i + '_' + j + '" </td>';
 		}
 		t += '</tr>';
 	}
 	t += '</table>';
-
 	$('#quatro_board').html(t);
-
 }
 
-
-
+/**
+ * makes request for player login 
+ */
 
 function login_to_game() {
 	if ($('#username').val() == '') {
@@ -39,10 +39,8 @@ function login_to_game() {
 		return;
 	}
 	draw_empty_board();
-
-
 	$.ajax({
-		url: "chess.php/players/login",
+		url: "quarto.php/players/login",
 		method: 'PUT',
 		dataType: "json",
 		headers: { "X-Token": me.token },
@@ -53,7 +51,11 @@ function login_to_game() {
 	});
 }
 
-
+/**
+ * stores the player info loacaly
+ * @param {json} data 
+ * cals update_info
+ */
 
 function login_result(data) {
 	me = data[0];
@@ -62,11 +64,20 @@ function login_result(data) {
 	game_status_update();
 }
 
-function login_error(data, y, z, c) {
+/**
+ * error information handling
+ * @param {json} data
+ */
+
+function login_error(data) {
 	var x = data.responseJSON;
 	alert(x.errormesg);
 }
 
+/**
+ * updates the webpage dynamically
+ * 
+ */
 
 function update_info() {
 	$('#player_info').html("<h2>Player Info</h2></br>" +
@@ -76,26 +87,73 @@ function update_info() {
 		"<h3>Player turn: </h3>" + game_status.p_turn + "</br>");
 }
 
-
+/**
+ * updates the webpage dynamically
+ * 
+ */
 
 function game_status_update() {
-
 	clearTimeout(timer);
-	$.ajax({ url: "chess.php/status/", success: update_status, headers: { "X-Token": me.token } });
+	$.ajax({ url: "quarto.php/status/",
+	 		 success: update_status,
+	  		 headers: { "X-Token": me.token }
+			 });
 }
 
+/**
+ * updates  local users info
+ * 
+ */
+
+function update_user(){
+	$.ajax({ url: "quarto.php/player/login",
+		     method: 'GET',
+		     dataType: "json",
+		     headers: { "X-Token": me.token },
+		     contentType: 'application/json',
+			 success: update_status
+   });
+
+}
+
+/**
+ * enables and disables the ui elements responsible for gameplay
+ * according to player turn and role
+ * 
+ * turn is defined with player token
+ * role can be either pick or place 
+ */
+
+function update_status(data) {
+	last_update=new Date().getTime();
+	var game_stat_old = game_status;
+	game_status=data[0];
+	update_user();
+	update_info();
+	clearTimeout(timer);
+	if(game_status.p_turn==me.token && me.role!=null) {
+		fill_board();
+		if (me.role=="pick"){
+			$('#piece_selector_input').show(1000);
+			timer=setTimeout(function() { game_status_update();}, 15000);
+		}else{
+			$('#piece_coordinates_input').show(1000);
+			timer=setTimeout(function() { game_status_update();}, 15000);
+		}	
 
 
+	}else{
+		$('#piece_selector_input').hide(1000);
+		$('#piece_coordinates_input').hide(1000);
+		timer=setTimeout(function() { game_status_update();}, 4000);
+	}
+}
 
-
-
-
-
-
-
-
-
-
+/**
+ * makes request to place piece
+ * sends x , y as coordinates retrieved 
+ * from webpage
+ */
 
 function do_place() {
 	var s = $('#piece_coordinates').val();
@@ -106,36 +164,47 @@ function do_place() {
 		return;
 	}
 	$.ajax({
-		url: "chess.php/board/piece/place/",
+		url: "quarto.php/board/piece/place/",
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
 		data: JSON.stringify({ x: a[0], y: a[1] }),
 		headers: { "X-Token": me.token },
 		success: move_result,
-		error: login_error
+		error: move_error
 	});
 
 }
 
-
+/**
+ * if place request succesful 
+ * updates status
+ */
 
 function move_result(data) {
 	game_status_update();
+	fill_board_by_data(data);
+}
+
+/**
+ *error information handling
+ * @param {json} data
+ */
+
+function move_error(data) {
+	var x = data.responseJSON;
+	alert(x.errormesg);
 
 }
 
-
-
-
-
-
-
+/**
+ *makes a request to retrieve all available pieces
+ */
 
 function piece_list() {
 
 	$.ajax({
-		url: "chess.php/board/pick",
+		url: "quarto.php/board/pick",
 		headers: { "X-Token": me.token },
 		success: update_piece_selector
 	});
@@ -143,8 +212,11 @@ function piece_list() {
 
 }
 
-
-
+/**
+ *updates selector element on webpage 
+ *with all available pieces retrived by 
+ *piece_list() function
+ */
 
 function update_piece_selector(list) {
 	$piece_list = list;
@@ -153,55 +225,75 @@ function update_piece_selector(list) {
 	}
 }
 
+/**
+ * makes request to pick piece
+ * sends piece_id to identify which piece we need
+ * from webpage
+ */
 
-
-
-
-
-
-
-function do_pick(piece) {
-
+function pick(piece) {
 	var s = $('#piece_coordinates').val();
-
-
 	$.ajax({
-		url: "chess.php/board/piece/pick/",
+		url: "quarto.php/board/piece/pick/",
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
 		data: JSON.stringify({ piece_id: piece }),
 		headers: { "X-Token": me.token },
 		success: pick_result,
-		error: login_error
+		error: pick_error
 	});
-
-
-
 }
 
-
-
-
-
-
-
-
+/**
+ * if place request succesful 
+ * updates status
+ */
 
 function pick_result(data) {
-	me = data[0];
-
-
-	update_info();
 	game_status_update();
 }
 
-function pick_error(data, y, z, c) {
+/**
+ *error information handling
+ * @param {json} data
+ */
+
+function pick_error(data) {
 	var x = data.responseJSON;
 	alert(x.errormesg);
 }
 
 
+/**
+ *makes request to get current state of board
+ * calls fill_board_by_data on succes 
+ */
+
+function fill_board() {
+	$.ajax({url: "quarto.php/board/", 
+		headers: {"X-Token": me.token},
+		success: fill_board_by_data });
+}
+
+/**
+ *fills table cells of web page dynamically with given state of board 
+ *and adds image representation of the piece
+ */
+
+function fill_board_by_data(data){
+	board=data;
+	for(var i=0;i<data.length;i++) {
+		var o = data[i];
+		var id = '#square_'+ o.x +'_' + o.y;
+		if(o.piece==null){
+			var im ='<img class="piece" src="images/'+ p +'.png">';
+		}else{
+			var im ='<img class="piece" src="images/'+'p'+ o.piece-1 +'.png">';
+		}
+		$(id).html(im);
+	}
+}
 
 
 
