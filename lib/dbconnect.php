@@ -1,9 +1,9 @@
-<?php
+<?php>
 
 $host='localhost';
 $db='adise_quarto_db';
 
-require_once "config_local.php"
+require_once "config_local.php";
 
 $user=$DB_USER;
 $pass=$DB_PASS;

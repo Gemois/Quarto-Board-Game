@@ -91,7 +91,7 @@ function register_first_player($input){
  */
 
 function set_current_turn($token){
-    $sql = 'update game_status set current_player="$token"';
+    $sql = 'update game_status set p_turn="$token"';
 	$st2 = $mysqli->prepare($sql);
 	$st2->execute();
 }

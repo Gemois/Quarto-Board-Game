@@ -4,10 +4,7 @@ var me = { username: null, token: null ,role: null};
 
 $(function () {
 	draw_empty_board();
-
-
-
-
+	$('#quatro_login').click( login_to_game);
 
 });
 
@@ -21,12 +18,12 @@ function draw_empty_board() {
 	for (var i = 4; i > 0; i--) {
 		t += '<tr>';
 		for (var j = 1; j <= 4; j++) {
-			t += '<td class="quarto_square" id="square_' + i + '_' + j + '" </td>';
+			t += '<td class="quarto_square" id="square_' + i + '_' + j + '">'+i+','+j+' </td>';
 		}
 		t += '</tr>';
 	}
 	t += '</table>';
-	$('#quatro_board').html(t);
+	$('#quarto_board').html(t);
 }
 
 /**
@@ -71,7 +68,7 @@ function login_result(data) {
 
 function login_error(data) {
 	var x = data.responseJSON;
-	alert(x.errormesg);
+	//alert(x.errormesg);
 }
 
 /**
