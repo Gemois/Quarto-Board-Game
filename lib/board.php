@@ -78,6 +78,9 @@ function pick_piece($input){
 		exit;
 	}
     do_pick_piece($input['piece_id']);
+    change_role_place($input['token']);
+    next_player($input['token']);
+
 }
 
 /**
@@ -247,105 +250,63 @@ function change_role_to_pick($token){
 
 function next_player($token){
     global $mysqli;
-    $sql = 'UPDATE game_status SET p_turn where token!=$token';
+    $sql = 'SELECT token from users  where token!=$token';
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res =$st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
-    return $res;
+
+    $sql = 'UPDATE game_status SET p_turn=?';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('s',$res );
+    $st->execute();
 }
 
+/**
+ * checks if curent placment of a piece wins the game
+ * @param string $x    
+ * @param string $y
+ * if the pieces on a [row/coloum/diagonal]  much one of the arrays included in the $attr_array
+ * that means that the piece have at least one common attribute and therefore means that current
+ * placement wins the game
+ *
+ *cals horisontal_pieces , vertical_pieces , check_left_diagonal_pieces , check_right_diagonal_pieces
+*/
 
+function check_win($x,$y){
+    $attr_array=array(array(1,2,3,4,5,6,7,8,9),
+                      array(10,11,12,13,14,15,16),
+                      array(5,6,7,8,13,14,14,16),
+                      array(1,2,3,9,10,11,12),
+                      array(2,4,6,8,10,12,14,16),
+                      array(1,3,5,7,9,11,13,15),
+                      array(3,4,7,8,11,12,15,16),
+                      array(1,2,5,6,9,10,13,14)
+                      );
 
+    $possible_win_line=array(horisontal_pieces($x,$y),
+                       vertical_pieces($x,$y),
+                       check_left_diagonal_pieces($x,$y),
+                       check_right_diagonal_pieces($x,$y)
+                       );
 
-
-
-
-
-// check after winning placement of a piece
-
-function check_winning_placement($x,$y){
-
-    $light_pieces=array(1,2,3,4,5,6,7,8,9);
-    $dark_pieces=array(10,11,12,13,14,15,16);
-
-    $round_pieces=array(5,6,7,8,13,14,14,16);
-    $square_pieces=array(1,2,3,9,10,11,12);
-
-
-    $hollow_pieces=array(2,4,6,8,10,12,14,16);
-    $solid_pieces=array(1,3,5,7,9,11,13,15);
-
-    $short_pieces=array(3,4,7,8,11,12,15,16);
-    $tall_pieces=array(1,2,5,6,9,10,13,14);
-
- 
- 
-
-    $hl = count(array_intersect(horisontal_pieces($x,$y), $light_pieces)) === 4;
-    $vl = count(array_intersect(vertical_pieces($x,$y), $light_pieces)) === 4;
-    $ldl = count(array_intersect(check_left_diagonal_pieces($x,$y), $light_pieces)) === 4;
-    $rdl = count(array_intersect(check_right_diagonal_pieces($x,$y), $light_pieces)) === 4;
-
-
-    $hd = count(array_intersect(horisontal_pieces($x,$y), $dark_pieces)) === 4;
-    $vd = count(array_intersect(vertical_pieces($x,$y), $dark_pieces)) === 4;
-    $ldd = count(array_intersect(check_left_diagonal_pieces($x,$y), $dark_pieces)) === 4;
-    $rdd = count(array_intersect(check_right_diagonal_pieces($x,$y), $dark_pieces)) === 4;
-
-
-    $hr = count(array_intersect(horisontal_pieces($x,$y), $round_pieces)) === 4;
-    $vr = count(array_intersect(vertical_pieces($x,$y), $round_pieces)) === 4;
-    $ldr = count(array_intersect(check_left_diagonal_pieces($x,$y), $round_pieces)) === 4;
-    $rdr = count(array_intersect(check_right_diagonal_pieces($x,$y), $round_pieces)) === 4;
-
-
-
-    $hsq = count(array_intersect(horisontal_pieces($x,$y), $square_pieces)) === 4;
-    $vsq = count(array_intersect(vertical_pieces($x,$y), $square_pieces)) === 4;
-    $ldsq = count(array_intersect(check_left_diagonal_pieces($x,$y), $square_pieces)) === 4;
-    $rdsq = count(array_intersect(check_right_diagonal_pieces($x,$y), $square_pieces)) === 4;
-
-
-
-
-    $hh = count(array_intersect(horisontal_pieces($x,$y), $hollow_pieces)) === 4;
-    $vh = count(array_intersect(vertical_pieces($x,$y), $hollow_pieces)) === 4;
-    $ldh = count(array_intersect(check_left_diagonal_pieces($x,$y), $hollow_pieces)) === 4;
-    $rdh = count(array_intersect(check_right_diagonal_pieces($x,$y), $hollow_pieces)) === 4;
-
-
-
-    $hs = count(array_intersect(horisontal_pieces($x,$y), $solid_pieces)) === 4;
-    $vs = count(array_intersect(vertical_pieces($x,$y), $solid_pieces)) === 4;
-    $lds = count(array_intersect(check_left_diagonal_pieces($x,$y), $solid_pieces)) === 4;
-    $rds = count(array_intersect(check_right_diagonal_pieces($x,$y), $solid_pieces)) === 4;
-
-
-
-    $hsh = count(array_intersect(horisontal_pieces($x,$y), $short_pieces)) === 4;
-    $vsh = count(array_intersect(vertical_pieces($x,$y), $short_pieces)) === 4;
-    $ldsh = count(array_intersect(check_left_diagonal_pieces($x,$y), $short_pieces)) === 4;
-    $rdsh = count(array_intersect(check_right_diagonal_pieces($x,$y), $short_pieces)) === 4;
-
-
-
-
-    $ht = count(array_intersect(horisontal_pieces($x,$y), $tall_pieces)) === 4;
-    $vt = count(array_intersect(vertical_pieces($x,$y), $tall_pieces)) === 4;
-    $ldt = count(array_intersect(check_left_diagonal_pieces($x,$y), $tall_pieces)) === 4;
-    $rdt = count(array_intersect(check_right_diagonal_pieces($x,$y), $tall_pieces)) === 4;
-
-
-
-if ($hl || $vl|| $ldl ||$rdl|| $hd|| $vd ||  $ldd  || $rdd  || $hr  || $vr  || $ldr  || $rdr  ||  $hsq ||   $vsq  ||  $ldsq   || $rdsq ||  $hh ||  $vh  || $ldh ||   $rdh  || $hs  || $vs ||  $lds  || $rds ||   $hsh  ||  $vsh ||  $ldsh  || $rdsh ||   $ht ||  $vt ||  $ldt ||  $rdt){
-return true;
-}else{
-return false;
-}
+    for(i=0;j<=4;i++){
+        for(j=0;j<4;j++){
+            if(count(array_intersect($possible_win_line[i],$attr_array[j])) == 4){
+                return true;
+                exit;
+            }
+        }
+    }
+    return false;
 }
 
-// returns the values of the row with the last piece placement
+/**
+ * reads all pieces on the horisontal(x) axis
+ * @param string $x    
+ * @param string $y
+ * @return array $res
+ * 
+ */
 
 function horisontal_pieces($x,$y){
 
@@ -361,17 +322,21 @@ function horisontal_pieces($x,$y){
 return $res;
 }
 
-// returns the valus of the column with the last piece placement
+/**
+ * reads all pieces on the vertical(y) axis
+ * @param string $x    
+ * @param string $y
+ * @return array $res
+ * 
+ */
 
 function vertical_pieces($x,$y){
-
-
     $res=array();
     for($i = 1; $i<=4; $i++){
     global $mysqli;
 	$sql = 'select piece from board where x=? and y=?';
 	$st = $mysqli->prepare($sql);
-    $st->bind_param('i',$x,$i);
+    $st->bind_param('ii',$x,$i);
 	$st->execute();
     $st->get_result();
 	$res = array_push(fetch_row(MYSQLI_ASSOC));
@@ -379,7 +344,14 @@ function vertical_pieces($x,$y){
     return $res;
 }
 
-// returns the values of the primary diagonal with the last piece placement
+/**
+ * reads all pieces on the left diagonal 
+ * @param string $x    
+ * @param string $y
+ * @return array $res
+ * 
+ */
+
 
 function check_left_diagonal_pieces($x,$y){
     if ($x=$y){
@@ -390,19 +362,24 @@ function check_left_diagonal_pieces($x,$y){
                     global $mysqli;
 	                $sql = 'select piece from board where x=? and y=?';
 	                $st = $mysqli->prepare($sql);
-                    $st->bind_param('i',$x,$i);
+                    $st->bind_param('ii',$x,$y);
 	                $st->execute();
                     $st->get_result();
 	                $res = array_push(fetch_row(MYSQLI_ASSOC));
                 }
             }
         }
+    }
     return $res;
-    }else 
-    return null;
 }
 
-// returns the values of the secondary diagonal with the last piece placement
+/**
+ * reads all pieces on the right diagonal 
+ * @param string $x    
+ * @param string $y
+ * @return array $res
+ * 
+ */
 
 function check_right_diagonal_pieces($x,$y){
     if ($x+$y=4){
@@ -413,14 +390,15 @@ function check_right_diagonal_pieces($x,$y){
                     global $mysqli;
                     $sql = 'select piece from board where x=? and y=?';
                     $st = $mysqli->prepare($sql);
-                    $st->bind_param('i',$x,$i);
+                    $st->bind_param('ii',$x,$i);
                     $st->execute();
                     $res = array_push($st->get_result());
                 }
     
             }
         }
+    }
     return $res;
-    }else
-        return null;
 }
+
+?>
