@@ -115,7 +115,7 @@ function handle_player($request,$method,$input) {
                                 print json_encode(['errormesg'=>"Method $method not allowed here."]);    
                            }
                          break;
-                case login:  handle_user($method,$input);
+                case 'login':  handle_user($method,$input);
                          break; 
                 default:  header("HTTP/1.1 404 Not Found");
 			  print json_encode(['errormesg'=>"Player $b not found."]);

@@ -1,4 +1,4 @@
-<?php>
+<?php
 
 $host='localhost';
 $db='adise_quarto_db';
@@ -11,10 +11,10 @@ $pass=$DB_PASS;
 
 
 if (gethostname()=='users.iee.ihu.gr'){
-    $mysqli= new $mysqli($host,$user,$pass,$db,null,'/home/student/it/2017/it174881') ;
+    $mysqli= new mysqli($host,$user,$pass,$db,null,'/home/student/it/2017/it174881') ;
 
 }else{
-    $mysqli= new $mysqli($host,$user,$pass,$db);
+    $mysqli= new mysqli($host,$user,$pass,$db);
 }
 
 

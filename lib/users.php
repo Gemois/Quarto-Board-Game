@@ -76,11 +76,10 @@ function register_first_player($input){
 
     $sql = 'select token from players';
 	$st2 = $mysqli->prepare($sql);
-	$st2->bind_param('s',$input['username']);
 	$st2->execute();
     $res = $st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC)
-    set_current_turn($res);
+    $res->fetch_row(MYSQLI_ASSOC);
+    set_current_turn($res[0]);
     show_user($res);
 }
 

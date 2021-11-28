@@ -4,7 +4,7 @@ var me = { username: null, token: null ,role: null};
 
 $(function () {
 	draw_empty_board();
-	$('#quatro_login').click( login_to_game);
+	$('#quatro_login').click(login_to_game);
 
 });
 
@@ -18,7 +18,7 @@ function draw_empty_board() {
 	for (var i = 4; i > 0; i--) {
 		t += '<tr>';
 		for (var j = 1; j <= 4; j++) {
-			t += '<td class="quarto_square" id="square_' + i + '_' + j + '">'+i+','+j+' </td>';
+			t += '<td  class="quarto_square" id="square_' + i + '_' + j + '"> <img class="piece" src="images/p.png"></BR> '+i +','+j+'  </img></td>';
 		}
 		t += '</tr>';
 	}
@@ -215,7 +215,7 @@ function piece_list() {
  *piece_list() function
  */
 
-function update_piece_selector(list) {
+function update_piece_selector($list) {
 	$piece_list = list;
 	for (var i = 0; i < $piece_list.length; i++) {
 		$('#piece_selector').append(new Option($piece_list[i][piece_id], $piece_list[i][piece_id]))
@@ -284,7 +284,7 @@ function fill_board_by_data(data){
 		var o = data[i];
 		var id = '#square_'+ o.x +'_' + o.y;
 		if(o.piece==null){
-			var im ='<img class="piece" src="images/'+ p +'.png">';
+			var im ='<img class="piece" src="images/p.png">';
 		}else{
 			var im ='<img class="piece" src="images/'+'p'+ o.piece-1 +'.png">';
 		}

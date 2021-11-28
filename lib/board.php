@@ -166,7 +166,7 @@ function place_piece($input) {
 		exit;
 	}
 	if(!check_empty_box($x,$y)){
-        do_place_piece($x,$y);
+        do_place_piece($input);
     }
 	header("HTTP/1.1 400 Bad Request");
 	print json_encode(['errormesg'=>"You cant place your piece here."]);
@@ -203,14 +203,14 @@ function check_empty_square($x,$y){
  * calls change_role
  */ 
 
-function do_place_piece($x,$y){
+function do_place_piece($input){
     $piece_id =curent_selected_piece();
         global $mysqli;
         $sql = 'call `place_piece`(?,?,?);';
         $st = $mysqli->prepare($sql);
-        $st->bind_param('iii',$x,$y,$piece_id );
+        $st->bind_param('iii',$input['x'],$input['y'],$piece_id );
         $st->execute();
-        change_role_to_pick($token);
+        change_role_to_pick($input['token']);
         header('Content-type: application/json');
         print json_encode(read_board(), JSON_PRETTY_PRINT);
 }
@@ -254,10 +254,11 @@ function next_player($token){
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res =$st->get_result();
+    $res->fetch_row(MYSQLI_ASSOC);
 
     $sql = 'UPDATE game_status SET p_turn=?';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('s',$res );
+    $st->bind_param('s',$res);
     $st->execute();
 }
 
@@ -317,9 +318,11 @@ function horisontal_pieces($x,$y){
 	$st = $mysqli->prepare($sql);
     $st->bind_param('i',$i,$y);
 	$st->execute();
-    $res = array_push(fetch_row(MYSQLI_ASSOC));
+    $res =$st->get_result();
+    $res->fetch_row(MYSQLI_ASSOC);
+    $result = array_push($res);
 }
-return $res;
+return $result;
 }
 
 /**
@@ -338,10 +341,11 @@ function vertical_pieces($x,$y){
 	$st = $mysqli->prepare($sql);
     $st->bind_param('ii',$x,$i);
 	$st->execute();
-    $st->get_result();
-	$res = array_push(fetch_row(MYSQLI_ASSOC));
+    $res =$st->get_result();
+    $res->fetch_row(MYSQLI_ASSOC);
+	$result = array_push($res);
     }
-    return $res;
+    return $result;
 }
 
 /**
@@ -363,14 +367,14 @@ function check_left_diagonal_pieces($x,$y){
 	                $sql = 'select piece from board where x=? and y=?';
 	                $st = $mysqli->prepare($sql);
                     $st->bind_param('ii',$x,$y);
-	                $st->execute();
-                    $st->get_result();
-	                $res = array_push(fetch_row(MYSQLI_ASSOC));
+                    $res =$st->get_result();
+                    $res->fetch_row(MYSQLI_ASSOC);
+	                $result = array_push($res);
                 }
             }
         }
     }
-    return $res;
+    return $result;
 }
 
 /**
@@ -392,13 +396,15 @@ function check_right_diagonal_pieces($x,$y){
                     $st = $mysqli->prepare($sql);
                     $st->bind_param('ii',$x,$i);
                     $st->execute();
-                    $res = array_push($st->get_result());
+                    $res =$st->get_result();
+                    $res->fetch_row(MYSQLI_ASSOC);
+                    $result = array_push($res);
                 }
     
             }
         }
     }
-    return $res;
+    return $result;
 }
 
 ?>
