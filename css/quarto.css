@@ -16,41 +16,15 @@ margin-left: 2%;
 margin-right: 2%;
 }
 
-
 .right_panel {
 width:21%;
 float: right;
 }
 
-
-table {
-  width: 90%;
-}
-td {
-  width: 33.33%;
-  position: relative;
-}
-td:after {
-  content: '';
-  display: block;
-  margin-top: 100%;
-}
-td #table_content {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: gold;
-}
-
 #quarto_table td {
   width: 10em; 
   height:10em;
-  border:1px solid black;
   text-align:center;
+  background-color: rgb(238, 237, 237);
 }
 
-#quarto_table {
-  border-collapse: collapse;
-}
