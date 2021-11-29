@@ -51,12 +51,12 @@ function set_user($input) {
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
-	$r = $res->fetch_all(MYSQLI_ASSOC);
-	if($r[0]['count']=0) {
+	$res->fetch_row(MYSQLI_ASSOC);
+	if($res['count']==0) {
         register_first_player($input);
 	}
-	elseif($r[0]['count']=1){
-        register_second_player($input);
+	elseif($res['count']==1){
+        register_second_player($input['username']);
     }
 	update_game_status();
 }
@@ -70,13 +70,13 @@ function set_user($input) {
 function register_first_player($input){
 	global $mysqli;
 	$sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="pick"';
-	$st2 = $mysqli->prepare($sql);
-	$st2->bind_param('s',$input['username']);
-	$st2->execute();
+	$st = $mysqli->prepare($sql);
+	$st->bind_param('s',$input['username']);
+	$st->execute();
 
     $sql = 'select token from players';
-	$st2 = $mysqli->prepare($sql);
-	$st2->execute();
+	$st = $mysqli->prepare($sql);
+	$st->execute();
     $res = $st->get_result();
     $res->fetch_row(MYSQLI_ASSOC);
     set_current_turn($res[0]);
@@ -90,9 +90,10 @@ function register_first_player($input){
  */
 
 function set_current_turn($token){
+	global $mysqli;
     $sql = 'update game_status set p_turn="$token"';
-	$st2 = $mysqli->prepare($sql);
-	$st2->execute();
+	$st = $mysqli->prepare($sql);
+	$st->execute();
 }
 
 /**
@@ -101,13 +102,12 @@ function set_current_turn($token){
  * sets role place
  */
 
-function register_second_player($input){
+function register_second_player($username){
 	global $mysqli;
     $sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="place"';
-	$st2 = $mysqli->prepare($sql);
-	$st2->bind_param('s',$input['username']);
-	$st2->execute();  
-    show_user($res);
+	$st = $mysqli->prepare($sql);
+	$st->bind_param('ss',$username,$username);
+	$st->execute();  	
 }
 
 /**
@@ -118,7 +118,7 @@ function register_second_player($input){
 
 function handle_user($method,$input) {
 	if($method=='GET') {
-		show_user($token);
+	//	show_user($input['token']);
 	} else if($method=='PUT') {
         set_user($input);
     }

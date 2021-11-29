@@ -75,7 +75,7 @@ function update_game_status() {
 	
 	switch($active_players) {
 		case 0: $new_status='not active'; 
-                    $new_turn=null
+                    $new_turn=null;
                     break;
 		case 1: $new_status='initialized'; break;
 		case 2: $new_status='started'; 				

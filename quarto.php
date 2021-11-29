@@ -77,21 +77,21 @@ function handle_board($method,$input) {
  * 
  */
 
-function handle_piece($method,$input) {
+function handle_piece($method,$request,$input) {
   switch ($b=array_shift($request)) {
-    case pick: if($method=='PUT'){
+    case 'pick': if($method=='PUT'){
                     pick_piece($input);
                }
                else{
                       piece_list();
                }
                 break;
-    case place: if($method=='GET') {
-                    show_piece($input['x'],$input['y']);
+    case 'place': if($method=='PUT') {
+		        place_piece($input);
+                }else{
+                        header("HTTP/1.1 400 Bad Request"); 
+                        print json_encode(['errormesg'=>"Method $method not allowed here."]);
                 }
-                else if ($method=='PUT') {
-		                place_piece($input);
-                } 
                 break;
   }
 }
@@ -104,7 +104,7 @@ function handle_piece($method,$input) {
  * 
  */
 
-function handle_player($request,$method,$input) {
+function handle_player($method,$request,$input) {
 	switch ($b=array_shift($request)) {
 		case '':
 		case null: if($method=='GET'){

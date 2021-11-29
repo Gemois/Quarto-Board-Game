@@ -77,7 +77,7 @@ function pick_piece($input){
 		print json_encode(['errormesg'=>"It is not your turn."]);
 		exit;
 	}
-    do_pick_piece($input['piece_id']);
+    do_pick_piece($input);
     change_role_place($input['token']);
     next_player($input['token']);
 
@@ -91,12 +91,12 @@ function pick_piece($input){
  * calls set_current_piece
  */ 
 
-function do_pick_piece($piece_id){
-    make_piece_unavelable($piece_id);
-    set_current_piece($piece_id);
+function do_pick_piece($input){
+    make_piece_unavelable($input['piece_id']);
+    set_current_piece($input['piece_id']);
 
     global $mysqli;
-    $next_player=next_player($token);
+    $next_player=next_player($input['token']);
     $sql = 'UPDATE game_status SET p_turn=? WHERE pieces_id=piece_id;';
     $st = $mysqli->prepare($sql);
     $st->bind_param('i',$next_player);
@@ -165,7 +165,7 @@ function place_piece($input) {
 		print json_encode(['errormesg'=>"It is not your turn."]);
 		exit;
 	}
-	if(!check_empty_box($x,$y)){
+	if(!check_empty_square($input['x'],$input['y'])){
         do_place_piece($input);
     }
 	header("HTTP/1.1 400 Bad Request");
@@ -228,7 +228,7 @@ function curent_selected_piece(){
 	$st->execute();
 	$res =$st->get_result();
     $res->fetch_row(MYSQLI_ASSOC);
-    return $res;
+    return $res[0];
 }
 
 /**
@@ -290,9 +290,9 @@ function check_win($x,$y){
                        check_right_diagonal_pieces($x,$y)
                        );
 
-    for(i=0;j<=4;i++){
-        for(j=0;j<4;j++){
-            if(count(array_intersect($possible_win_line[i],$attr_array[j])) == 4){
+    for($i=0;$i<=4;$i++){
+        for($j=0;$j<4;$j++){
+            if(count(array_intersect($possible_win_line[$i],$attr_array[$j])) == 4){
                 return true;
                 exit;
             }
@@ -320,7 +320,7 @@ function horisontal_pieces($x,$y){
 	$st->execute();
     $res =$st->get_result();
     $res->fetch_row(MYSQLI_ASSOC);
-    $result = array_push($res);
+    $result = array_push($res[0]);
 }
 return $result;
 }
@@ -334,7 +334,7 @@ return $result;
  */
 
 function vertical_pieces($x,$y){
-    $res=array();
+    $result=array();
     for($i = 1; $i<=4; $i++){
     global $mysqli;
 	$sql = 'select piece from board where x=? and y=?';
@@ -343,7 +343,7 @@ function vertical_pieces($x,$y){
 	$st->execute();
     $res =$st->get_result();
     $res->fetch_row(MYSQLI_ASSOC);
-	$result = array_push($res);
+	$result = array_push($res[0]);
     }
     return $result;
 }
@@ -359,7 +359,7 @@ function vertical_pieces($x,$y){
 
 function check_left_diagonal_pieces($x,$y){
     if ($x=$y){
-        $res=array();
+        $result=array();
         for($i = 1; $i<=4; $i++){
             for($j = 1; $j<=4; $j++){
                 if($x=$y){

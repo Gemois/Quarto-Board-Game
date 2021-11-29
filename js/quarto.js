@@ -37,12 +37,12 @@ function login_to_game() {
 	}
 	draw_empty_board();
 	$.ajax({
-		url: "quarto.php/players/login",
+		url: "quarto.php/players/login/",
 		method: 'PUT',
 		dataType: "json",
 		headers: { "X-Token": me.token },
 		contentType: 'application/json',
-		data: JSON.stringify({ username: $('#username').val() }),
+		data: JSON.stringify({username: $('#username').val() }),
 		success: login_result,
 		error: login_error
 	});
