@@ -1,5 +1,9 @@
 <?php
 
+
+
+
+
 /**
  * prints all users.
  *
@@ -29,8 +33,9 @@ function show_user($token) {
 	$st->bind_param('s',$token);
 	$st->execute();
 	$res = $st->get_result();
+	$user=$res->fetch_all(MYSQLI_ASSOC);
 	header('Content-type: application/json');
-	print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
+	print json_encode($user, JSON_PRETTY_PRINT);
 }
 
 /**
@@ -47,15 +52,15 @@ function set_user($input) {
 	}
 	$username=$input['username'];
 	global $mysqli;
-	$sql = 'select count(*) as count from players ';
+	$sql = 'select count(*) as c from players ';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
-	$res->fetch_row(MYSQLI_ASSOC);
-	if($res['count']==0) {
+	$count=$res->fetch_assoc();
+	if($count['c']==0) {
         register_first_player($input);
 	}
-	elseif($res['count']==1){
+	elseif($count['c']==1){
         register_second_player($input['username']);
     }
 	update_game_status();
@@ -67,20 +72,29 @@ function set_user($input) {
  * sets role pick
  */
 
+
 function register_first_player($input){
 	global $mysqli;
-	$sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="pick"';
+
+	$sql = 'INSERT INTO players(username,token,`role`) VALUES (?,md5(CONCAT( ?, NOW())),"pick");' ;
+
+
+
+
+	//$sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="pick"';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('s',$input['username']);
+	$st->bind_param('ss',$input['username'],$input['username']);
 	$st->execute();
 
     $sql = 'select token from players';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
     $res = $st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
-    set_current_turn($res[0]);
-    show_user($res);
+    $token=$res->fetch_assoc();
+	$first_p_token = $token['token'];
+    set_current_turn($token['token']);
+    show_user($token['token']);
+	
 }
 
 /**
@@ -104,10 +118,20 @@ function set_current_turn($token){
 
 function register_second_player($username){
 	global $mysqli;
-    $sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="place"';
+	$sql = 'INSERT INTO players(username,token,role) VALUES (?,md5(CONCAT( ?, NOW())),"place");' ;
+   // $sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="place"';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('ss',$username,$username);
-	$st->execute();  	
+	$st->execute();  
+	
+	global $first_p_token;
+	$sql = 'select token from players where token!=$first_p_token';
+	$st = $mysqli->prepare($sql);
+	$st->execute();
+    $res = $st->get_result();
+	$token=$res->fetch_assoc();
+    show_user($token['token']);
+	
 }
 
 /**

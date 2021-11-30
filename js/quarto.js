@@ -1,5 +1,5 @@
 var me = { username: null, token: null ,role: null};
-
+var game_status={};
 
 
 $(function () {
@@ -77,11 +77,13 @@ function login_error(data) {
  */
 
 function update_info() {
-	$('#player_info').html("<h2>Player Info</h2></br>" +
-		"<h3>Username: </h3>" + me.username + "</br>" +
-		"<h3>token: </h3>" + me.token + "</br>" +
-		"<h3>Game state: </h3>" + game_status.status + "</br>" +
-		"<h3>Player turn: </h3>" + game_status.p_turn + "</br>");
+
+	$('#player_info').html("<h2>Player info</h2><br><h3>Username: </h3>"
+							+me.username+"<h3>token: </h3>"
+							+me.token+"<h3>Player role: </h3>"
+							+me.role+ "<h3>Game state: </h3>"
+							+game_status.status+"<h3>Player turn: </h3>"
+							+game_status.p_turn);
 }
 
 /**
