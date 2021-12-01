@@ -50,8 +50,8 @@ function piece_list(){
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res =$st->get_result();
-    $pieces=$res->fetch_all(MYSQLI_ASSOC);
-;    print json_encode($pieces, JSON_PRETTY_PRINT);
+    //$pieces=$res->fetch_all(MYSQLI_ASSOC);
+;    print json_encode($res->fetch_all(), JSON_PRETTY_PRINT);
 }
 
 /**
@@ -358,7 +358,7 @@ function vertical_pieces($x,$y){
 
 
 function check_left_diagonal_pieces($x,$y){
-    if ($x=$y){
+    if ($x==$y){
         $result=array();
         for($i = 1; $i<=4; $i++){
             for($j = 1; $j<=4; $j++){
@@ -386,11 +386,11 @@ function check_left_diagonal_pieces($x,$y){
  */
 
 function check_right_diagonal_pieces($x,$y){
-    if ($x+$y=4){
+    if ($x+$y==4){
         $res=array();
         for($i = 1; $i<=4; $i++){
             for($j = 1; $j<=4; $j++){
-                if($x+$y=4){
+                if($x+$y==4){
                     global $mysqli;
                     $sql = 'select piece from board where x=? and y=?';
                     $st = $mysqli->prepare($sql);

@@ -19,98 +19,34 @@
 
 
 
-<body class="p-3 mb-2 bg-light text-dark">
-    <br />
-    <h1 id="main_title">Quarto Board Game</h1><br><br>
+<body  class="p-3 mb-2 bg-light text-dark">
+    
+    <div id="quarto_board"></div>
+    <div class="p-3 border bg-light" id="player_info"><h3>Player Info => </h3></div>
 
-    <div class="container">
-
-
-        <div class="left_panel">
-
-            <div class="card" style="width: 18rem;">
-                <img src="images/quatro_board_game.jpg" class="card-img-top" alt="...">
-                <div class="card-body">
-                    <h5 class="card-title">Quatro Board Game Rules</h5><br />
-                    <p class="card-text">Quarto is a board game for two players invented by Swiss mathematician Blaise
-                        Müller.The game<br />
-                        is played on a 4×4 board.There are 16 unique pieces to play with, each of which is
-                        either:<br /><br />
-                        <lo>
-                            <li>tall or short; </li>
-                            <li>light or dark; </li>
-                            <li>square or circular; </li>
-                            <li>and hollow-top or solid-top.</li>
-                        </lo> <br /><br />
-                        Players take turns choosing a piece which the other player must then place on the board. A
-                        player<br />
-                        wins by placing a piece on the board which forms a horizontal, vertical, or diagonal row of four
-                        <br />
-                        pieces, all of which have a common attribute (all short, all circular, etc.).
-                    </p>
-                    <a href="https://en.wikipedia.org/wiki/Quarto_(board_game)" class="btn btn-primary">More info
-                        here</a>
-                </div>
-            </div>
-
-
-        </div>
-
-
-        <div class="middle_panel" id="quarto_board">
-
-        </div>
-
-
-        <div class="right_panel">
-
-
-            <div class="p-3 border bg-light" id="player_info">
-
-
-            </div>
-            <br>
-
-
-
-            <div class="p-3 border bg-light" id="game_login_input">
-                <h3>Insert username.</h3><br>
-                <input id='username'>
-                <button id='quatro_login' class='btn btn-primary'>Login</button><br>
-            </div>
-
-            <br>
-            <div class="p-3 border bg-light" id="piece_selector_input">
-                <h3>Select piece for the other player to place.</h3><br>
-                <select id='piece_selector'>
-
-                </select>
-                <button id='piece_selected' class='btn btn-primary'>Select</button>
-
-            </div>
-
-            <br>
-            <div class="p-3 border bg-light" id="piece_coordinates_input">
-
-                <h3>Choose your piece placement</h3><br>
-                <input id='piece_coordinates'>
-                <button id='place_piece' class='btn btn-primary'>Select</button>
-
-            </div>
-
-            <br>
-
-            <div class="p-3 border bg-light" id="start_reset_game">
-                <button id='quatro_reset' class='btn btn-primary'>START/RESET</button><br>
-            </div>
-
-
-
-        </div>
-
-
+    <div class="p-3 border bg-light" id="game_login_input">
+        <h3>Insert username.</h3><br>
+        <input id='username'>
+        <button id='quatro_login' class='btn btn-primary'>Login</button><br>
     </div>
 
+    <div class="p-3 border bg-light" id="piece_selector_input">
+        <h3>Select piece for the other player to place.</h3><br>
+        <select id='piece_selector'>
+            <option value="">---Choose piece---</option>
+        </select>
+        <button id='piece_selected' class='btn btn-primary'>Select</button>
+        <div id="piece_images"></div>
+    </div>
+    <br>
+    <div class="p-3 border bg-light" id="piece_coordinates_input">
+        <h3>Choose your piece placement</h3><br>
+        <input id='piece_coordinates'>
+        <button id='place_piece' class='btn btn-primary'>Select</button>
+    </div>
+    <br>
+    <div class="p-3 border bg-light" id="start_reset_game">
+        <button id='quatro_reset' class='btn btn-primary'>START/RESET</button><br>
+    </div>
 </body>
-
 </html>

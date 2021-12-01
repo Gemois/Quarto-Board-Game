@@ -1,11 +1,15 @@
 var me = { username: null, token: null ,role: null};
 var game_status={};
+var piece_list2={pieces_id: null};
+var last_update=new Date().getTime();
+var timer=null;
 
 
 $(function () {
 	draw_empty_board();
 	piece_list();
 	$('#quatro_login').click(login_to_game);
+
 	
 });
 
@@ -79,11 +83,11 @@ function login_error(data) {
 
 function update_info() {
 
-	$('#player_info').html("<h2>Player info</h2><br><h3>Username: </h3>"
-							+me.username+"<h3>token: </h3>"
-							+me.token+"<h3>Player role: </h3>"
-							+me.role+ "<h3>Game state: </h3>"
-							+game_status.status+"<h3>Player turn: </h3>"
+	$('#player_info').html("<h3>Player info =></h3><strong> Username:</strong>"
+							+me.username+"<strong> token: </strong>"
+							+me.token+"<strong> Player role: </strong> "
+							+me.role+ "<strong> Game state: </strong>"
+							+game_status.status+"<strong> Player turn: </strong>"
 							+game_status.p_turn);
 }
 
@@ -220,10 +224,16 @@ function piece_list() {
  */
 
 function update_piece_selector(list) {
-	var piece_list = list;
+	var piece_list = JSON.parse(list);
 	for (var i = 0; i < piece_list.length; i++) {
 		$('#piece_selector').append("<option value=\""+piece_list[i]+"\">"+piece_list[i]+"</option>");
+	}
+	update_pieces_remaining_images(piece_list);
+}
 
+function update_pieces_remaining_images(list){
+	for (var i = 0; i < list.length; i++) {
+$('#piece_images').append("<img src=\"images/p"+list[i]+".png\" alt=\"Piece :"+list[i]+"\">");
 	}
 }
 
@@ -296,10 +306,3 @@ function fill_board_by_data(data){
 		$(id).html(im);
 	}
 }
-
-
-
-
-
-
-
