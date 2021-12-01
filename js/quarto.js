@@ -4,8 +4,9 @@ var game_status={};
 
 $(function () {
 	draw_empty_board();
+	piece_list();
 	$('#quatro_login').click(login_to_game);
-
+	
 });
 
 /**
@@ -201,9 +202,10 @@ function move_error(data) {
  */
 
 function piece_list() {
-
 	$.ajax({
-		url: "quarto.php/board/pick",
+		method:'GET',
+		url: "quarto.php/board/piece/pick",
+		contentType: 'application/json',
 		headers: { "X-Token": me.token },
 		success: update_piece_selector
 	});
@@ -217,10 +219,11 @@ function piece_list() {
  *piece_list() function
  */
 
-function update_piece_selector($list) {
-	$piece_list = list;
-	for (var i = 0; i < $piece_list.length; i++) {
-		$('#piece_selector').append(new Option($piece_list[i][piece_id], $piece_list[i][piece_id]))
+function update_piece_selector(list) {
+	var piece_list = list;
+	for (var i = 0; i < piece_list.length; i++) {
+		$('#piece_selector').append("<option value=\""+piece_list[i]+"\">"+piece_list[i]+"</option>");
+
 	}
 }
 

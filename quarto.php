@@ -78,7 +78,7 @@ function handle_board($method,$input) {
  */
 
 function handle_piece($method,$request,$input) {
-  switch ($b=array_shift($request)) {
+  switch ($request) {
     case 'pick': if($method=='PUT'){
                     pick_piece($input);
                }

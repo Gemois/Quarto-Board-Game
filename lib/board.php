@@ -46,12 +46,12 @@ function reset_board() {
 
 function piece_list(){
     global $mysqli;
-    $sql = 'SELECT pieces_id from pieces where available="true"';
+    $sql = 'SELECT pieces_id from pieces where available=true';
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res =$st->get_result();
-    $res->fetch_all(MYSQLI_ASSOC);
-    print json_encode($res, JSON_PRETTY_PRINT);
+    $pieces=$res->fetch_all(MYSQLI_ASSOC);
+;    print json_encode($pieces, JSON_PRETTY_PRINT);
 }
 
 /**
