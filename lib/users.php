@@ -1,9 +1,5 @@
 <?php
 
-
-
-
-
 /**
  * prints all users.
  *
@@ -63,7 +59,7 @@ function set_user($input) {
 	elseif($count['c']==1){
         register_second_player($input['username']);
     }
-	update_game_status();
+	//update_game_status();
 }
 
 /**
@@ -97,6 +93,11 @@ function register_first_player($input){
 	
 }
 
+
+
+
+
+
 /**
  * sets player turn in game status table
  * @param string  $token
@@ -105,8 +106,9 @@ function register_first_player($input){
 
 function set_current_turn($token){
 	global $mysqli;
-    $sql = 'update game_status set p_turn="$token"';
+    $sql = 'UPDATE `game_status` SET p_turn=?';
 	$st = $mysqli->prepare($sql);
+	$st->bind_param('s',$token);
 	$st->execute();
 }
 
@@ -125,8 +127,10 @@ function register_second_player($username){
 	$st->execute();  
 	
 	global $first_p_token;
-	$sql = 'select token from players where token!=$first_p_token';
+	echo $first_p_token;
+	$sql = 'select token from players where token!=?';
 	$st = $mysqli->prepare($sql);
+	$st->bind_param('s',$first_p_token);
 	$st->execute();
     $res = $st->get_result();
 	$token=$res->fetch_assoc();

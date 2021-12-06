@@ -28,14 +28,23 @@ function read_board() {
 
 /**
  * resets board 
- * calls mysql store procidure  to reset all board rows 
+ * calls mysql store procidures  
+ * to reset all board rows 
+ * to reset players rows
+ * to reset piece availability
+ * to reset game_status information
  */
 
 function reset_board() {
 	global $mysqli;
 	$sql = 'call clean_board()';
 	$mysqli->query($sql);
-	
+	$sql1 = 'call reset_players()';
+    $mysqli->query($sql1);
+	$sql2 = 'call reset_pieces()';
+    $mysqli->query($sql2);
+	$sql3 = 'call clean_game_status()';
+    $mysqli->query($sql3);
 }
 
 /**
@@ -50,8 +59,7 @@ function piece_list(){
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res =$st->get_result();
-    //$pieces=$res->fetch_all(MYSQLI_ASSOC);
-;    print json_encode($res->fetch_all(), JSON_PRETTY_PRINT);
+    print json_encode($res->fetch_all(), JSON_PRETTY_PRINT);
 }
 
 /**

@@ -1,15 +1,15 @@
 var me = { username: null, token: null ,role: null};
-var game_status={};
-var piece_list2={pieces_id: null};
+var game_status={status:null,p_turn:null,current_piece:null};
+//var piece_list2={pieces_id: null};
 var last_update=new Date().getTime();
 var timer=null;
 
 
 $(function () {
-	draw_empty_board();
-	piece_list();
-	$('#quatro_login').click(login_to_game);
-
+	draw_empty_board();	
+$('#quatro_login').click(login_to_game);
+$('#start_reset_game').click(reset_game);
+current_piece;
 	
 });
 
@@ -30,6 +30,18 @@ function draw_empty_board() {
 	t += '</table>';
 	$('#quarto_board').html(t);
 }
+
+
+function reset_game(){
+	$.ajax({ url: "quarto.php/board/",
+	method: "POST",
+	success: (function(){location.reload();}),
+	 headers: { "X-Token": me.token }
+   });
+
+
+}
+
 
 /**
  * makes request for player login 
@@ -62,6 +74,7 @@ function login_to_game() {
 function login_result(data) {
 	me = data[0];
 	$("#game_login_input").hide();
+	piece_list();
 	update_info();
 	game_status_update();
 }
@@ -73,7 +86,7 @@ function login_result(data) {
 
 function login_error(data) {
 	var x = data.responseJSON;
-	//alert(x.errormesg);
+	alert(x.errormesg);
 }
 
 /**
@@ -88,7 +101,8 @@ function update_info() {
 							+me.token+"<strong> Player role: </strong> "
 							+me.role+ "<strong> Game state: </strong>"
 							+game_status.status+"<strong> Player turn: </strong>"
-							+game_status.p_turn);
+							+game_status.p_turn+"<strong> Current Piece: </strong>"
+							+game_status.current_piece);
 }
 
 /**
@@ -132,13 +146,13 @@ function update_status(data) {
 	last_update=new Date().getTime();
 	var game_stat_old = game_status;
 	game_status=data[0];
-	update_user();
-	update_info();
+	//update_user();
+	//update_info();
 	clearTimeout(timer);
 	if(game_status.p_turn==me.token && me.role!=null) {
 		fill_board();
 		if (me.role=="pick"){
-			$('#piece_selector_input').show(1000);
+			$('#piece_selector_input').show(10000);
 			timer=setTimeout(function() { game_status_update();}, 15000);
 		}else{
 			$('#piece_coordinates_input').show(1000);
@@ -153,6 +167,14 @@ function update_status(data) {
 	}
 }
 
+
+
+function current_piece(){
+	$('#current_piece').attr("src","\"images/p"+game_status.current_piece+".png\"");
+	}
+
+
+
 /**
  * makes request to place piece
  * sends x , y as coordinates retrieved 
@@ -160,6 +182,7 @@ function update_status(data) {
  */
 
 function do_place() {
+	current_piece;
 	var s = $('#piece_coordinates').val();
 
 	var a = s.trim().split(/[ ]+/);
@@ -294,14 +317,14 @@ function fill_board() {
  */
 
 function fill_board_by_data(data){
-	board=data;
+	
 	for(var i=0;i<data.length;i++) {
 		var o = data[i];
-		var id = '#square_'+ o.x +'_' + o.y;
+		var id = '#square_'+ o.x +'_' + o.y ;
 		if(o.piece==null){
-			var im ='<img class="piece" src="images/p.png">';
+			var im ='<img class="piece" src="images/p.png"></BR> '+o.x +','+o.y+'  </img>';
 		}else{
-			var im ='<img class="piece" src="images/'+'p'+ o.piece-1 +'.png">';
+			var im ='<img class="piece" src="images/p'+ o.piece +'.png"></BR> '+o.x +','+o.y+'  </img>';
 		}
 		$(id).html(im);
 	}
