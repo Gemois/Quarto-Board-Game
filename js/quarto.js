@@ -1,6 +1,5 @@
 var me = { username: null, token: null ,role: null};
-var game_status={status:null,p_turn:null,current_piece:null};
-//var piece_list2={pieces_id: null};
+var game_status={status:null,p_turn:null,current_piece:null,result:null,last_change:null};
 var last_update=new Date().getTime();
 var timer=null;
 
@@ -9,6 +8,7 @@ $(function () {
 	draw_empty_board();	
 $('#quatro_login').click(login_to_game);
 $('#start_reset_game').click(reset_game);
+$('piece_selected').click(pick);
 current_piece;
 	
 });
@@ -113,6 +113,7 @@ function update_info() {
 function game_status_update() {
 	clearTimeout(timer);
 	$.ajax({ url: "quarto.php/status/",
+			 method: 'GET',
 	 		 success: update_status,
 	  		 headers: { "X-Token": me.token }
 			 });
@@ -146,8 +147,8 @@ function update_status(data) {
 	last_update=new Date().getTime();
 	var game_stat_old = game_status;
 	game_status=data[0];
-	//update_user();
-	//update_info();
+	update_user();
+	update_info();
 	clearTimeout(timer);
 	if(game_status.p_turn==me.token && me.role!=null) {
 		fill_board();
@@ -266,14 +267,14 @@ $('#piece_images').append("<img src=\"images/p"+list[i]+".png\" alt=\"Piece :"+l
  * from webpage
  */
 
-function pick(piece) {
-	var s = $('#piece_coordinates').val();
+function pick() {
+	var s = $('#piece_selector').val();
 	$.ajax({
 		url: "quarto.php/board/piece/pick/",
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
-		data: JSON.stringify({ piece_id: piece }),
+		data: JSON.stringify({ piece_id: s }),
 		headers: { "X-Token": me.token },
 		success: pick_result,
 		error: pick_error
