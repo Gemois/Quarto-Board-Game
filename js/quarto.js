@@ -9,6 +9,7 @@ $(function () {
 	$('#start_reset_game').click(reset_game);
 	$('#piece_selected').click(pick);
 	$('#waiting').hide();
+	$('#place_piece').click(do_place);
 
 });
 
@@ -150,6 +151,7 @@ function update_status(data) {
 	if (game_status.p_turn == me.token && me.role != null) {
 		fill_board();
 		if (me.role == "pick") {
+
 			$('#piece_selector_input').show(10000);
 			$('#piece_coordinates_input').hide();
 			timer = setTimeout(function () { game_status_update(); }, 1000);
@@ -214,7 +216,10 @@ function current_piece() {
 */
 
 function pick() {
+
 	var s = $('#piece_selector').val();
+
+
 	$.ajax({
 		url: "quarto.php/board/piece/pick/",
 		method: 'PUT',
@@ -242,8 +247,8 @@ function pick_result(data) {
 */
 
 function pick_error(data) {
-	//var x = data.responseJSON;
-	//alert(x.errormesg);
+	var x = data.responseJSON;
+	alert(x.errormesg);
 }
 
 /**
@@ -253,10 +258,11 @@ function pick_error(data) {
  */
 
 function do_place() {
-	current_piece;
+	empty_piece_list();
+	piece_list();
 	var s = $('#piece_coordinates').val();
-
 	var a = s.trim().split(/[ ]+/);
+	var p = game_status.current_piece;
 	if (a.length != 2) {
 		alert('Must give 2 numbers');
 		return;
@@ -266,10 +272,10 @@ function do_place() {
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
-		data: JSON.stringify({ x: a[0], y: a[1] }),
+		data: JSON.stringify({ x: a[0], y: a[1], piece_id: p }),
 		headers: { "X-Token": me.token },
-		success: move_result,
-		error: move_error
+		success: place_result,
+		error: place_error
 	});
 
 }
@@ -279,7 +285,7 @@ function do_place() {
  * updates status
  */
 
-function move_result(data) {
+function place_result(data) {
 	game_status_update();
 	fill_board_by_data(data);
 }
@@ -289,7 +295,7 @@ function move_result(data) {
  * @param {json} data
  */
 
-function move_error(data) {
+function place_error(data) {
 	var x = data.responseJSON;
 	alert(x.errormesg);
 
@@ -309,6 +315,17 @@ function piece_list() {
 	});
 
 
+}
+
+/**
+ * erases all options from piece selector 
+ *erases all images corresponding to those options
+ *in order to be dynamically refilled with new piece list
+ */
+
+function empty_piece_list() {
+	$('#piece_selector').html("<option value=\"\">---Choose piece---</option>");
+	$('#piece_images').html(" ");
 }
 
 /**

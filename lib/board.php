@@ -74,6 +74,11 @@ function piece_list()
 
 function pick_piece($input)
 {
+    if ($input['piece_id'] == "") {
+        header("HTTP/1.1 400 Bad Request");
+        print json_encode(['errormesg' => "piece is not set."]);
+        exit;
+    }
     if ($input['token'] == null) {
         header("HTTP/1.1 400 Bad Request");
         print json_encode(['errormesg' => "token is not set."]);
@@ -118,7 +123,7 @@ function do_pick_piece($input)
 function make_piece_unavelable($piece_id)
 {
     global $mysqli;
-    $sql = 'UPDATE pieces SET available=false WHERE pieces_id=?;';
+    $sql = 'UPDATE pieces SET available=false WHERE pieces_id=?';
     $st = $mysqli->prepare($sql);
     $st->bind_param('i', $piece_id);
     $st->execute();
@@ -176,11 +181,12 @@ function place_piece($input)
         print json_encode(['errormesg' => "It is not your turn."]);
         exit;
     }
-    if (!check_empty_square($input['x'], $input['y'])) {
+    if (check_empty_square($input['x'], $input['y'])) {
         do_place_piece($input);
+    } else {
+        header("HTTP/1.1 400 Bad Request");
+        print json_encode(['errormesg' => "You cant place your piece here."]);
     }
-    header("HTTP/1.1 400 Bad Request");
-    print json_encode(['errormesg' => "You cant place your piece here."]);
     exit;
 }
 
@@ -195,12 +201,13 @@ function place_piece($input)
 function check_empty_square($x, $y)
 {
     global $mysqli;
-    $sql = 'select piece from player where x=?and y=?';
+    $sql = 'select count(piece) as c  from board where x=? and y=?';
     $st = $mysqli->prepare($sql);
     $st->bind_param('ii', $x, $y);
     $st->execute();
     $res = $st->get_result();
-    if ($res) {
+    $count = $res->fetch_assoc();
+    if ($count['c'] > 0) {
         return false;
     } else {
         return true;
@@ -217,7 +224,8 @@ function check_empty_square($x, $y)
 
 function do_place_piece($input)
 {
-    $piece_id = curent_selected_piece();
+    //$piece_id = curent_selected_piece();
+    $piece_id = $input['piece_id'];
     global $mysqli;
     $sql = 'call `place_piece`(?,?,?);';
     $st = $mysqli->prepare($sql);
@@ -233,17 +241,17 @@ function do_place_piece($input)
  * @return int $res is piece_id
  */
 
-function curent_selected_piece()
-{
+// function curent_selected_piece()
+// {
 
-    global $mysqli;
-    $sql = 'select current_piece from game_status ';
-    $st = $mysqli->prepare($sql);
-    $st->execute();
-    $res = $st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
-    return $res[0];
-}
+//     global $mysqli;
+//     $sql = 'select current_piece from game_status ';
+//     $st = $mysqli->prepare($sql);
+//     $st->execute();
+//     $res = $st->get_result();
+//     $res->fetch_row(MYSQLI_ASSOC);
+//     return $res[0];
+// }
 
 /**
  * sets user role to pick
@@ -253,8 +261,9 @@ function curent_selected_piece()
 function change_role_to_pick($token)
 {
     global $mysqli;
-    $sql = 'UPDATE users SET role="pick" WHERE token=$token';
+    $sql = 'UPDATE players SET `role`="pick" WHERE token=?';
     $st = $mysqli->prepare($sql);
+    $st->bind_param('s', $token);
     $st->execute();
 }
 
@@ -271,7 +280,7 @@ function next_player($token)
     $st->bind_param('s', $token);
     $st->execute();
     $res = $st->get_result();
-    $token=$res->fetch_assoc();
+    $token = $res->fetch_assoc();
 
     $sql = 'UPDATE game_status SET p_turn=?';
     $st = $mysqli->prepare($sql);
