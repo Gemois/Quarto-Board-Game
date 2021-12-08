@@ -6,7 +6,8 @@
  * for every user prints their username and token.
  */
 
-function show_users() {
+function show_users()
+{
 	global $mysqli;
 	$sql = 'select username,token from players';
 	$st = $mysqli->prepare($sql);
@@ -22,16 +23,16 @@ function show_users() {
  * @return json user data 
  */
 
-function show_user($token) {
+function show_user($token)
+{
 	global $mysqli;
 	$sql = 'select username,token,role from players where token=?';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('s',$token);
+	$st->bind_param('s', $token);
 	$st->execute();
 	$res = $st->get_result();
-	$user=$res->fetch_all(MYSQLI_ASSOC);
 	header('Content-type: application/json');
-	print json_encode($user, JSON_PRETTY_PRINT);
+	print json_encode($res->fetch_all(MYSQLI_ASSOC), JSON_PRETTY_PRINT);
 }
 
 /**
@@ -40,63 +41,50 @@ function show_user($token) {
  * checks if user is first to login or second 
  */
 
-function set_user($input) {
-	if(!isset($input['username'])) {
+function set_user($input)
+{
+	if (!isset($input['username'])) {
 		header("HTTP/1.1 400 Bad Request");
-		print json_encode(['errormesg'=>"No username given."]);
+		print json_encode(['errormesg' => "No username given."]);
 		exit;
 	}
-	$username=$input['username'];
+	$username = $input['username'];
 	global $mysqli;
 	$sql = 'select count(*) as c from players ';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
-	$count=$res->fetch_assoc();
-	if($count['c']==0) {
-        register_first_player($input);
+	$count = $res->fetch_assoc();
+	if ($count['c'] == 0) {
+		register_first_player($input['username']);
+	} elseif ($count['c'] == 1) {
+		register_second_player($input['username']);
 	}
-	elseif($count['c']==1){
-        register_second_player($input['username']);
-    }
-	//update_game_status();
+	update_game_status();
 }
 
 /**
  * sets specific characteristics for first user
- * @param array $input
+ * @param string $username
  * sets role pick
  */
 
-
-function register_first_player($input){
+function register_first_player($username)
+{
 	global $mysqli;
-
-	$sql = 'INSERT INTO players(username,token,`role`) VALUES (?,md5(CONCAT( ?, NOW())),"pick");' ;
-
-
-
-
-	//$sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="pick"';
+	$sql = 'INSERT INTO players(username,token,`role`) VALUES (?,md5(CONCAT( ?, NOW())),"pick");';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('ss',$input['username'],$input['username']);
+	$st->bind_param('ss', $username, $username);
 	$st->execute();
 
-    $sql = 'select token from players';
+	$sql = 'select token from players';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
-    $res = $st->get_result();
-    $token=$res->fetch_assoc();
-	$first_p_token = $token['token'];
-    set_current_turn($token['token']);
-    show_user($token['token']);
-	
+	$res = $st->get_result();
+	$token = $res->fetch_assoc();
+	set_current_turn($token['token']);
+	show_user($token['token']);
 }
-
-
-
-
-
 
 /**
  * sets player turn in game status table
@@ -104,38 +92,37 @@ function register_first_player($input){
  *  called while there is only the first player 
  */
 
-function set_current_turn($token){
+function set_current_turn($token)
+{
 	global $mysqli;
-    $sql = 'UPDATE `game_status` SET p_turn=?';
+	$sql = 'UPDATE `game_status` SET p_turn=?';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('s',$token);
+	$st->bind_param('s', $token);
 	$st->execute();
 }
 
 /**
  * sets specific characteristics for second user
- * @param array  $input
+ * @param string  $username
  * sets role place
  */
 
-function register_second_player($username){
+function register_second_player($username)
+{
 	global $mysqli;
-	$sql = 'INSERT INTO players(username,token,role) VALUES (?,md5(CONCAT( ?, NOW())),"place");' ;
-   // $sql = 'update players set username=?, token=md5(CONCAT( ?, NOW())) ,role="place"';
+	$sql = 'INSERT INTO players(username,token,role) VALUES (?,md5(CONCAT( ?, NOW())),"place");';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('ss',$username,$username);
-	$st->execute();  
-	
-	global $first_p_token;
-	echo $first_p_token;
-	$sql = 'select token from players where token!=?';
-	$st = $mysqli->prepare($sql);
-	$st->bind_param('s',$first_p_token);
+	$st->bind_param('ss', $username, $username);
 	$st->execute();
-    $res = $st->get_result();
-	$token=$res->fetch_assoc();
-    show_user($token['token']);
-	
+
+	$id = $mysqli->insert_id;
+	$sql = 'select token from players where player_id=?';
+	$st = $mysqli->prepare($sql);
+	$st->bind_param('i', $id);
+	$st->execute();
+	$res = $st->get_result();
+	$token = $res->fetch_assoc();
+	show_user($token['token']);
 }
 
 /**
@@ -144,12 +131,12 @@ function register_second_player($username){
  * @param array  $input
  */
 
-function handle_user($method,$input) {
-	if($method=='GET') {
-	//	show_user($input['token']);
-	} else if($method=='PUT') {
-        set_user($input);
-    }
+function handle_user($method, $input)
+{
+	if ($method == 'GET') {
+		show_user($input['token']);
+	} else if ($method == 'PUT') {
+		set_user($input);
+	}
 }
-
 ?>

@@ -1,16 +1,15 @@
-var me = { username: null, token: null ,role: null};
-var game_status={status:null,p_turn:null,current_piece:null,result:null,last_change:null};
-var last_update=new Date().getTime();
-var timer=null;
-
+var me = { username: null, token: null, role: null };
+var game_status = { status: null, p_turn: null, current_piece: null, result: null, last_change: null };
+var last_update = new Date().getTime();
+var timer = null;
 
 $(function () {
-	draw_empty_board();	
-$('#quatro_login').click(login_to_game);
-$('#start_reset_game').click(reset_game);
-$('piece_selected').click(pick);
-current_piece;
-	
+	draw_empty_board();
+	$('#quatro_login').click(login_to_game);
+	$('#start_reset_game').click(reset_game);
+	$('#piece_selected').click(pick);
+	$('#waiting').hide();
+	current_piece;
 });
 
 /**
@@ -23,25 +22,13 @@ function draw_empty_board() {
 	for (var i = 4; i > 0; i--) {
 		t += '<tr>';
 		for (var j = 1; j <= 4; j++) {
-			t += '<td  class="quarto_square" id="square_' + i + '_' + j + '"> <img class="piece" src="images/p.png"></BR> '+i +','+j+'  </img></td>';
+			t += '<td  class="quarto_square" id="square_' + i + '_' + j + '"> <img class="piece" src="images/p.png"></BR> ' + i + ',' + j + '  </img></td>';
 		}
 		t += '</tr>';
 	}
 	t += '</table>';
 	$('#quarto_board').html(t);
 }
-
-
-function reset_game(){
-	$.ajax({ url: "quarto.php/board/",
-	method: "POST",
-	success: (function(){location.reload();}),
-	 headers: { "X-Token": me.token }
-   });
-
-
-}
-
 
 /**
  * makes request for player login 
@@ -59,7 +46,7 @@ function login_to_game() {
 		dataType: "json",
 		headers: { "X-Token": me.token },
 		contentType: 'application/json',
-		data: JSON.stringify({username: $('#username').val() }),
+		data: JSON.stringify({ username: $('#username').val() }),
 		success: login_result,
 		error: login_error
 	});
@@ -95,14 +82,13 @@ function login_error(data) {
  */
 
 function update_info() {
-
 	$('#player_info').html("<h3>Player info =></h3><strong> Username:</strong>"
-							+me.username+"<strong> token: </strong>"
-							+me.token+"<strong> Player role: </strong> "
-							+me.role+ "<strong> Game state: </strong>"
-							+game_status.status+"<strong> Player turn: </strong>"
-							+game_status.p_turn+"<strong> Current Piece: </strong>"
-							+game_status.current_piece);
+		+ me.username + "<strong> token: </strong>"
+		+ me.token + "<strong> Player role: </strong> "
+		+ me.role + "<strong> Game state: </strong>"
+		+ game_status.status + "<strong> Player turn: </strong>"
+		+ game_status.p_turn + "<strong> Current Piece: </strong>"
+		+ game_status.current_piece);
 }
 
 /**
@@ -112,28 +98,40 @@ function update_info() {
 
 function game_status_update() {
 	clearTimeout(timer);
-	$.ajax({ url: "quarto.php/status/",
-			 method: 'GET',
-	 		 success: update_status,
-	  		 headers: { "X-Token": me.token }
-			 });
+	$.ajax({
+		url: "quarto.php/status/",
+		method: 'GET',
+		success: update_status,
+		headers: { "X-Token": me.token }
+	});
+}
+
+/**
+ * makes http request to get player info
+ * updates local player info in case of changes in the database
+ */
+
+function update_user() {
+	$.ajax({
+		url: "quarto.php/players/login/",
+		method: 'GET',
+		dataType: "json",
+		headers: { "X-Token": me.token },
+		contentType: 'application/json',
+		success: save_player_info
+	});
+
 }
 
 /**
  * updates  local users info
- * 
+ * stores the changes
  */
 
-function update_user(){
-	$.ajax({ url: "quarto.php/player/login",
-		     method: 'GET',
-		     dataType: "json",
-		     headers: { "X-Token": me.token },
-		     contentType: 'application/json',
-			 success: update_status
-   });
-
+function save_player_info(data) {
+	me = data[0];
 }
+
 
 /**
  * enables and disables the ui elements responsible for gameplay
@@ -144,37 +142,108 @@ function update_user(){
  */
 
 function update_status(data) {
-	last_update=new Date().getTime();
-	var game_stat_old = game_status;
-	game_status=data[0];
+	last_update = new Date().getTime();
+	game_status = data[0];
 	update_user();
 	update_info();
 	clearTimeout(timer);
-	if(game_status.p_turn==me.token && me.role!=null) {
+	if (game_status.p_turn == me.token && me.role != null) {
 		fill_board();
-		if (me.role=="pick"){
+		if (me.role == "pick") {
 			$('#piece_selector_input').show(10000);
-			timer=setTimeout(function() { game_status_update();}, 15000);
-		}else{
+			$('#piece_coordinates_input').hide();
+			timer = setTimeout(function () { game_status_update(); }, 15000);
+		} else {
 			$('#piece_coordinates_input').show(1000);
-			timer=setTimeout(function() { game_status_update();}, 15000);
-		}	
+			timer = setTimeout(function () { game_status_update(); }, 15000);
+		}
 
 
-	}else{
+	} else {
+		fill_board();
+		$('#waiting').show();
 		$('#piece_selector_input').hide(1000);
 		$('#piece_coordinates_input').hide(1000);
-		timer=setTimeout(function() { game_status_update();}, 4000);
+		timer = setTimeout(function () { game_status_update(); }, 4000);
 	}
 }
 
 
+/**
+ *makes request to get current state of board
+ * calls fill_board_by_data on succes 
+ */
 
-function current_piece(){
-	$('#current_piece').attr("src","\"images/p"+game_status.current_piece+".png\"");
+function fill_board() {
+	$.ajax({
+		url: "quarto.php/board/",
+		headers: { "X-Token": me.token },
+		success: fill_board_by_data
+	});
+}
+
+/**
+ *fills table cells of web page dynamically with given state of board 
+ *and adds image representation of the piece
+ */
+
+function fill_board_by_data(data) {
+
+	for (var i = 0; i < data.length; i++) {
+		var o = data[i];
+		var id = '#square_' + o.x + '_' + o.y;
+		if (o.piece == null) {
+			var im = '<img class="piece" src="images/p.png"></BR> ' + o.x + ',' + o.y + '  </img>';
+		} else {
+			var im = '<img class="piece" src="images/p' + o.piece + '.png"></BR> ' + o.x + ',' + o.y + '  </img>';
+		}
+		$(id).html(im);
 	}
+}
+
+function current_piece() {
+	$('#current_piece').attr("src", "\"images/p" + game_status.current_piece + ".png\"");
+}
 
 
+/**
+* makes request to pick piece
+* sends piece_id to identify which piece we need
+* from webpage
+*/
+
+function pick() {
+	var s = $('#piece_selector').val();
+	$.ajax({
+		url: "quarto.php/board/piece/pick/",
+		method: 'PUT',
+		dataType: "json",
+		contentType: 'application/json',
+		data: JSON.stringify({ piece_id: s }),
+		headers: { "X-Token": me.token },
+		success: pick_result,
+		error: pick_error
+	});
+}
+
+/**
+* if place request succesful 
+* updates status
+*/
+
+function pick_result(data) {
+	game_status_update();
+}
+
+/**
+*error information handling
+* @param {json} data
+*/
+
+function pick_error(data) {
+	var x = data.responseJSON;
+	alert(x.errormesg);
+}
 
 /**
  * makes request to place piece
@@ -231,7 +300,7 @@ function move_error(data) {
 
 function piece_list() {
 	$.ajax({
-		method:'GET',
+		method: 'GET',
 		url: "quarto.php/board/piece/pick",
 		contentType: 'application/json',
 		headers: { "X-Token": me.token },
@@ -250,83 +319,31 @@ function piece_list() {
 function update_piece_selector(list) {
 	var piece_list = JSON.parse(list);
 	for (var i = 0; i < piece_list.length; i++) {
-		$('#piece_selector').append("<option value=\""+piece_list[i]+"\">"+piece_list[i]+"</option>");
+		$('#piece_selector').append("<option value=\"" + piece_list[i] + "\">" + piece_list[i] + "</option>");
 	}
 	update_pieces_remaining_images(piece_list);
 }
 
-function update_pieces_remaining_images(list){
+/**
+*updates images of remaining available pieces 
+*
+*/
+
+function update_pieces_remaining_images(list) {
 	for (var i = 0; i < list.length; i++) {
-$('#piece_images').append("<img src=\"images/p"+list[i]+".png\" alt=\"Piece :"+list[i]+"\">");
+		$('#piece_images').append("<img src=\"images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">");
 	}
 }
 
 /**
- * makes request to pick piece
- * sends piece_id to identify which piece we need
- * from webpage
- */
+*send http request to reset all essential db tables
+*/
 
-function pick() {
-	var s = $('#piece_selector').val();
+function reset_game() {
 	$.ajax({
-		url: "quarto.php/board/piece/pick/",
-		method: 'PUT',
-		dataType: "json",
-		contentType: 'application/json',
-		data: JSON.stringify({ piece_id: s }),
-		headers: { "X-Token": me.token },
-		success: pick_result,
-		error: pick_error
+		url: "quarto.php/board/",
+		method: "POST",
+		success: (function () { location.reload(); }),
+		headers: { "X-Token": me.token }
 	});
-}
-
-/**
- * if place request succesful 
- * updates status
- */
-
-function pick_result(data) {
-	game_status_update();
-}
-
-/**
- *error information handling
- * @param {json} data
- */
-
-function pick_error(data) {
-	var x = data.responseJSON;
-	alert(x.errormesg);
-}
-
-
-/**
- *makes request to get current state of board
- * calls fill_board_by_data on succes 
- */
-
-function fill_board() {
-	$.ajax({url: "quarto.php/board/", 
-		headers: {"X-Token": me.token},
-		success: fill_board_by_data });
-}
-
-/**
- *fills table cells of web page dynamically with given state of board 
- *and adds image representation of the piece
- */
-
-function fill_board_by_data(data){
-	
-	for(var i=0;i<data.length;i++) {
-		var o = data[i];
-		var id = '#square_'+ o.x +'_' + o.y ;
-		if(o.piece==null){
-			var im ='<img class="piece" src="images/p.png"></BR> '+o.x +','+o.y+'  </img>';
-		}else{
-			var im ='<img class="piece" src="images/p'+ o.piece +'.png"></BR> '+o.x +','+o.y+'  </img>';
-		}
-		$(id).html(im);
-	}
 }

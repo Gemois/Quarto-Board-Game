@@ -12,11 +12,11 @@ require_once "lib/status.php";
  */
 
 $method = $_SERVER['REQUEST_METHOD'];
-$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
-$input = json_decode(file_get_contents('php://input'),true);
+$request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
+$input = json_decode(file_get_contents('php://input'), true);
 
-if(isset($_SERVER['HTTP_X_TOKEN'])) {
-	$input['token']=$_SERVER['HTTP_X_TOKEN'];
+if (isset($_SERVER['HTTP_X_TOKEN'])) {
+        $input['token'] = $_SERVER['HTTP_X_TOKEN'];
 }
 
 /**
@@ -26,39 +26,32 @@ if(isset($_SERVER['HTTP_X_TOKEN'])) {
  * using $input can read and pass as parameters raw data from the http request body 
  */
 
-switch ($r=array_shift($request)) {
-    case 'board' : 
-                switch ($b=array_shift($request)) {
+switch ($r = array_shift($request)) {
+        case 'board':
+                switch ($b = array_shift($request)) {
                         case '':
-                        case null: handle_board($method,$input);
+                        case null:
+                                handle_board($method, $input);
                                 break;
-                        case 'piece': handle_piece($method, $request[0],$input);
+                        case 'piece':
+                                handle_piece($method, $request[0], $input);
                                 break;
-                        default: header("HTTP/1.1 404 Not Found");
+                        default:
+                                header("HTTP/1.1 404 Not Found");
                                 break;
-			}
-		break;
-    case 'status': handle_status($method);
-		break;
-    case 'players': handle_player($method, $request,$input);
+                }
+                break;
+        case 'status':
+                handle_status($method);
+                break;
+        case 'players':
+                handle_player($method, $request, $input);
                 break;
 
-    default:  header("HTTP/1.1 404 Not Found");
+        default:
+                header("HTTP/1.1 404 Not Found");
                 exit;
 }
-
-
-
-
-function handle_status($method){
-        if($method=='GET'){
-                show_status();
-        }else{
-                header("HTTP/1.1 400 Bad Request"); 
-                print json_encode(['errormesg'=>"Method $method not allowed here."]);
-        }
-}
-
 
 /**
  * selects the appropriate board action(function call ) acording http request  
@@ -67,14 +60,14 @@ function handle_status($method){
  * 
  */
 
-function handle_board($method,$input) {
-    if($method=='GET') {
-            show_board($input);
-    } else if ($method=='POST') {
-            reset_board();
-            show_board($input);
-    }
-    
+function handle_board($method, $input)
+{
+        if ($method == 'GET') {
+                show_board($input);
+        } else if ($method == 'POST') {
+                reset_board();
+                show_board($input);
+        }
 }
 
 /**
@@ -84,23 +77,25 @@ function handle_board($method,$input) {
  * 
  */
 
-function handle_piece($method,$request,$input) {
-  switch ($request) {
-    case 'pick': if($method=='PUT'){
-                    pick_piece($input);
-               }
-               else{
-                      piece_list();
-               }
-                break;
-    case 'place': if($method=='PUT') {
-		        place_piece($input);
-                }else{
-                        header("HTTP/1.1 400 Bad Request"); 
-                        print json_encode(['errormesg'=>"Method $method not allowed here."]);
-                }
-                break;
-  }
+function handle_piece($method, $request, $input)
+{
+        switch ($request) {
+                case 'pick':
+                        if ($method == 'PUT') {
+                                pick_piece($input);
+                        } else {
+                                piece_list();
+                        }
+                        break;
+                case 'place':
+                        if ($method == 'PUT') {
+                                place_piece($input);
+                        } else {
+                                header("HTTP/1.1 400 Bad Request");
+                                print json_encode(['errormesg' => "Method $method not allowed here."]);
+                        }
+                        break;
+        }
 }
 
 /**
@@ -111,23 +106,41 @@ function handle_piece($method,$request,$input) {
  * 
  */
 
-function handle_player($method,$request,$input) {
-	switch ($b=array_shift($request)) {
-		case '':
-		case null: if($method=='GET'){
+function handle_player($method, $request, $input)
+{
+        switch ($b = array_shift($request)) {
+                case '':
+                case null:
+                        if ($method == 'GET') {
                                 show_users($method);
-                           }
-		           else{
-                                header("HTTP/1.1 400 Bad Request"); 
-                                print json_encode(['errormesg'=>"Method $method not allowed here."]);    
-                           }
-                         break;
-                case 'login':  handle_user($method,$input);
-                         break; 
-                default:  header("HTTP/1.1 404 Not Found");
-			  print json_encode(['errormesg'=>"Player $b not found."]);
-                         break;
-	}
+                        } else {
+                                header("HTTP/1.1 400 Bad Request");
+                                print json_encode(['errormesg' => "Method $method not allowed here."]);
+                        }
+                        break;
+                case 'login':
+                        handle_user($method, $input);
+                        break;
+                default:
+                        header("HTTP/1.1 404 Not Found");
+                        print json_encode(['errormesg' => "Player $b not found."]);
+                        break;
+        }
 }
- 
+
+/**
+ * selects the appropriate status action(function call ) acording http request  
+ * @param string $method only GET is implemented
+ * 
+ */
+
+function handle_status($method)
+{
+        if ($method == 'GET') {
+                show_status();
+        } else {
+                header("HTTP/1.1 400 Bad Request");
+                print json_encode(['errormesg' => "Method $method not allowed here."]);
+        }
+}
 ?>

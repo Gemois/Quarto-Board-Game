@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
 
 <head>
@@ -14,15 +13,17 @@
     <link rel="stylesheet" href="css/quarto.css">
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/quarto.js"></script>
-   
+
 </head>
 
 
 
-<body  class="p-3 mb-2 bg-light text-dark">
-    
+<body class="p-3 mb-2 bg-light text-dark">
+
     <div id="quarto_board"></div>
-    <div class="p-3 border bg-light" id="player_info"><h3>Player Info => </h3></div>
+    <div class="p-3 border bg-light" id="player_info">
+        <h3>Player Info => </h3>
+    </div>
 
     <div class="p-3 border bg-light" id="game_login_input">
         <h3>Insert username.</h3><br>
@@ -41,14 +42,20 @@
     <br>
     <div class="p-3 border bg-light" id="piece_coordinates_input">
         <h3>Choose your piece placement</h3><br>
-        <img id="current_piece"  src="">
+        <img id="current_piece" src="">
         <input id='piece_coordinates'>
         <button id='place_piece' class='btn btn-primary'>Select</button>
-        
+
     </div>
+
+    <div class="p-3 border bg-light" id="waiting">
+        <h3>Waiting for other player ...</h3>
+    </div>
+
     <br>
     <div class="p-3 border bg-light" id="start_reset_game">
         <button id='quatro_reset' class='btn btn-primary'>START/RESET</button><br>
     </div>
 </body>
+
 </html>
