@@ -74,7 +74,7 @@ function piece_list()
 
 function pick_piece($input)
 {
-    if ($input['token'] == null || $input['username'] == '') {
+    if ($input['token'] == null) {
         header("HTTP/1.1 400 Bad Request");
         print json_encode(['errormesg' => "token is not set."]);
         exit;
@@ -91,8 +91,6 @@ function pick_piece($input)
         exit;
     }
     do_pick_piece($input);
-    change_role_place($input['token']);
-    next_player($input['token']);
 }
 
 /**
@@ -107,13 +105,8 @@ function do_pick_piece($input)
 {
     make_piece_unavelable($input['piece_id']);
     set_current_piece($input['piece_id']);
-
-    global $mysqli;
-    $next_player = next_player($input['token']);
-    $sql = 'UPDATE game_status SET p_turn=? WHERE pieces_id=piece_id;';
-    $st = $mysqli->prepare($sql);
-    $st->bind_param('i', $next_player);
-    $st->execute();
+    change_role_place($input['token']);
+    next_player($input['token']);
 }
 
 
@@ -125,8 +118,9 @@ function do_pick_piece($input)
 function make_piece_unavelable($piece_id)
 {
     global $mysqli;
-    $sql = 'UPDATE pieces SET available="false" WHERE pieces_id=piece_id;';
+    $sql = 'UPDATE pieces SET available=false WHERE pieces_id=?;';
     $st = $mysqli->prepare($sql);
+    $st->bind_param('i', $piece_id);
     $st->execute();
 }
 
@@ -152,8 +146,9 @@ function set_current_piece($piece_id)
 function change_role_place($token)
 {
     global $mysqli;
-    $sql = 'UPDATE users SET role="place" WHERE token=$token';
+    $sql = 'UPDATE players SET `role`="place" WHERE token=?';
     $st = $mysqli->prepare($sql);
+    $st->bind_param('s', $token);
     $st->execute();
 }
 
@@ -271,15 +266,16 @@ function change_role_to_pick($token)
 function next_player($token)
 {
     global $mysqli;
-    $sql = 'SELECT token from users  where token!=$token';
+    $sql = 'SELECT token from players  where token!=?';
     $st = $mysqli->prepare($sql);
+    $st->bind_param('s', $token);
     $st->execute();
     $res = $st->get_result();
-    $res->fetch_row(MYSQLI_ASSOC);
+    $token=$res->fetch_assoc();
 
     $sql = 'UPDATE game_status SET p_turn=?';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('s', $res);
+    $st->bind_param('s', $token['token']);
     $st->execute();
 }
 

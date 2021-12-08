@@ -9,7 +9,7 @@ $(function () {
 	$('#start_reset_game').click(reset_game);
 	$('#piece_selected').click(pick);
 	$('#waiting').hide();
-	current_piece;
+
 });
 
 /**
@@ -152,20 +152,21 @@ function update_status(data) {
 		if (me.role == "pick") {
 			$('#piece_selector_input').show(10000);
 			$('#piece_coordinates_input').hide();
-			timer = setTimeout(function () { game_status_update(); }, 15000);
+			timer = setTimeout(function () { game_status_update(); }, 1000);
 		} else {
+			$('#waiting').hide();
+			current_piece();
 			$('#piece_coordinates_input').show(1000);
-			timer = setTimeout(function () { game_status_update(); }, 15000);
+			timer = setTimeout(function () { game_status_update(); }, 1000);
 		}
-
-
 	} else {
 		fill_board();
 		$('#waiting').show();
 		$('#piece_selector_input').hide(1000);
 		$('#piece_coordinates_input').hide(1000);
-		timer = setTimeout(function () { game_status_update(); }, 4000);
+		timer = setTimeout(function () { game_status_update(); }, 1000);
 	}
+
 }
 
 
@@ -202,7 +203,7 @@ function fill_board_by_data(data) {
 }
 
 function current_piece() {
-	$('#current_piece').attr("src", "\"images/p" + game_status.current_piece + ".png\"");
+	$('#curent_piece_img').html("<img src=\"images/p" + game_status.current_piece + ".png\"></img>");
 }
 
 
@@ -241,8 +242,8 @@ function pick_result(data) {
 */
 
 function pick_error(data) {
-	var x = data.responseJSON;
-	alert(x.errormesg);
+	//var x = data.responseJSON;
+	//alert(x.errormesg);
 }
 
 /**
@@ -331,7 +332,7 @@ function update_piece_selector(list) {
 
 function update_pieces_remaining_images(list) {
 	for (var i = 0; i < list.length; i++) {
-		$('#piece_images').append("<img src=\"images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">");
+		$('#piece_images').append("<img src=\"images/available_images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">");
 	}
 }
 
