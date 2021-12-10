@@ -152,7 +152,7 @@ function update_status(data) {
 		fill_board();
 		if (me.role == "pick") {
 
-			$('#piece_selector_input').show(10000);
+			$('#piece_selector_input').show(1000);
 			$('#piece_coordinates_input').hide();
 			timer = setTimeout(function () { game_status_update(); }, 1000);
 		} else {
@@ -296,8 +296,8 @@ function place_result(data) {
  */
 
 function place_error(data) {
-	var x = data.responseJSON;
-	alert(x.errormesg);
+	//var x = data.responseJSON;
+	//alert(x.errormesg);
 
 }
 
