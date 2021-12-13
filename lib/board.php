@@ -231,9 +231,16 @@ function do_place_piece($input)
     $st = $mysqli->prepare($sql);
     $st->bind_param('iii', $input['x'], $input['y'], $piece_id);
     $st->execute();
-    change_role_to_pick($input['token']);
-    header('Content-type: application/json');
-    print json_encode(read_board(), JSON_PRETTY_PRINT);
+    if (check_win($input['x'], $input['y'])) {
+        global $mysqli;
+        $sql1 = 'UPDATE `game_status` SET `result`="W"';
+        $st1 = $mysqli->prepare($sql1);
+        $st1->execute();
+    } else {
+        change_role_to_pick($input['token']);
+        header('Content-type: application/json');
+        print json_encode(read_board(), JSON_PRETTY_PRINT);
+    }
 }
 
 /**
@@ -302,29 +309,29 @@ function next_player($token)
 function check_win($x, $y)
 {
     $attr_array = array(
-        array(1, 2, 3, 4, 5, 6, 7, 8, 9),
-        array(10, 11, 12, 13, 14, 15, 16),
-        array(5, 6, 7, 8, 13, 14, 14, 16),
-        array(1, 2, 3, 9, 10, 11, 12),
+        array(1, 2, 3, 4, 5, 6, 7, 8),
+        array(9, 10, 11, 12, 13, 14, 15, 16),
+        array(5, 6, 7, 8, 13, 14, 15, 16),
+        array(1, 2, 3, 4, 9, 10, 11, 12),
         array(2, 4, 6, 8, 10, 12, 14, 16),
         array(1, 3, 5, 7, 9, 11, 13, 15),
         array(3, 4, 7, 8, 11, 12, 15, 16),
         array(1, 2, 5, 6, 9, 10, 13, 14)
     );
 
-        $hp=horisontal_pieces($y);
-        $vp=vertical_pieces($x);
-        $lfp=check_left_diagonal_pieces($x, $y);
-        $rdp=check_right_diagonal_pieces($x, $y);
+    $hp = horisontal_pieces($y);
+    $vp = vertical_pieces($x);
 
-        if($x==$y){
-            $possible_win_line = array($hp,$vp,$lfp);
-        }elseif($x+$y==5){
-            $possible_win_line = array($hp,$vp,$rdp);
-        }else{
-            $possible_win_line = array($hp,$vp);
-        }
-        
+    if ($x == $y) {
+        $ldp = check_left_diagonal_pieces();
+        $possible_win_line = array($hp, $vp, $ldp);
+    } elseif ($x + $y == 5) {
+        $rdp = check_right_diagonal_pieces();
+        $possible_win_line = array($hp, $vp, $rdp);
+    } else {
+        $possible_win_line = array($hp, $vp);
+    }
+
     for ($i = 0; $i < count($possible_win_line); $i++) {
         for ($j = 0; $j < count($attr_array); $j++) {
             if (count(array_intersect($possible_win_line[$i], $attr_array[$j])) == 4) {
@@ -351,11 +358,11 @@ function horisontal_pieces($y)
         global $mysqli;
         $sql = 'select piece from board where x=? and y=?';
         $st = $mysqli->prepare($sql);
-        $st->bind_param('i', $i, $y);
+        $st->bind_param('ii', $i, $y);
         $st->execute();
         $res = $st->get_result();
-        $res1=$res->fetch_assoc();
-        array_push($result,$res1['piece']);
+        $res1 = $res->fetch_assoc();
+        array_push($result, $res1['piece']);
     }
     return $result;
 }
@@ -378,8 +385,8 @@ function vertical_pieces($x)
         $st->bind_param('ii', $x, $i);
         $st->execute();
         $res = $st->get_result();
-        $res1=$res->fetch_assoc();
-        array_push($result,$res1['piece']);
+        $res1 = $res->fetch_assoc();
+        array_push($result, $res1['piece']);
     }
     return $result;
 }
@@ -393,20 +400,23 @@ function vertical_pieces($x)
  */
 
 
-function check_left_diagonal_pieces($x, $y)
+function check_left_diagonal_pieces()
 {
-    if ($x == $y) {
-        $result = array();
-        for ($i = 1; $i <= 4; $i++) {
-            for ($j = 1; $j <= 4; $j++) {
-                if ($i = $j) {
-                    global $mysqli;
-                    $sql = 'select piece from board where x=? and y=?';
-                    $st = $mysqli->prepare($sql);
-                    $st->bind_param('ii', $i, $j);
-                    $res = $st->get_result();
-                    $res1=$res->fetch_assoc();
-                    array_push($result,$res1['piece']);
+    $result = array();
+    for ($i = 1; $i <= 4; $i++) {
+        for ($j = 1; $j <= 4; $j++) {
+            if ($i == $j) {
+                global $mysqli;
+                $sql = 'select piece from board where x=? and y=?';
+                $st = $mysqli->prepare($sql);
+                $st->bind_param('ii', $i, $j);
+                $st->execute();
+                $res = $st->get_result();
+                if ($res) {
+                    $res1 = $res->fetch_assoc();
+                    array_push($result, $res1['piece']);
+                } else {
+                    array_push($result, 0);
                 }
             }
         }
@@ -422,21 +432,23 @@ function check_left_diagonal_pieces($x, $y)
  * 
  */
 
-function check_right_diagonal_pieces($x, $y)
+function check_right_diagonal_pieces()
 {
-    if ($x + $y == 5) {
-        $result = array();
-        for ($i = 1; $i <= 4; $i++) {
-            for ($j = 1; $j <= 4; $j++) {
-                if ($i + $j == 5) {
-                    global $mysqli;
-                    $sql = 'select piece from board where x=? and y=?';
-                    $st = $mysqli->prepare($sql);
-                    $st->bind_param('ii', $i, $j);
-                    $st->execute();
-                    $res = $st->get_result();
-                    $res1=$res->fetch_assoc();
-                    array_push($result,$res1['piece']);
+    $result = array();
+    for ($i = 1; $i <= 4; $i++) {
+        for ($j = 1; $j <= 4; $j++) {
+            if ($i + $j == 5) {
+                global $mysqli;
+                $sql = 'select piece from board where x=? and y=?';
+                $st = $mysqli->prepare($sql);
+                $st->bind_param('ii', $i, $j);
+                $st->execute();
+                $res = $st->get_result();
+                if ($res) {
+                    $res1 = $res->fetch_assoc();
+                    array_push($result, $res1['piece']);
+                } else {
+                    array_push($result, 0);
                 }
             }
         }

@@ -11,6 +11,7 @@ $(function () {
 	$('#waiting').hide();
 	$('#place_piece').click(do_place);
 
+
 });
 
 /**
@@ -89,7 +90,8 @@ function update_info() {
 		+ me.role + "<strong> Game state: </strong>"
 		+ game_status.status + "<strong> Player turn: </strong>"
 		+ game_status.p_turn + "<strong> Current Piece: </strong>"
-		+ game_status.current_piece);
+		+ game_status.current_piece + "<strong> Result: </strong>"
+		+ game_status.result);
 }
 
 /**
@@ -143,8 +145,31 @@ function save_player_info(data) {
  */
 
 function update_status(data) {
+
 	last_update = new Date().getTime();
 	game_status = data[0];
+	if (game_status.result == "W") {
+		$('#piece_selector_input').hide();
+		$('#piece_coordinates_input').hide();
+		$('#waiting').hide();
+		if (game_status.p_turn != me.token) {
+			alert("You Lost The Game!!! Good luck next time !!!")
+		} else {
+			alert("You Won The Game!!!")
+		}
+		fill_board();
+		update_info();
+		exit();
+	} else if (game_status.result == "D") {
+		$('#piece_selector_input').hide();
+		$('#piece_coordinates_input').hide();
+		$('#waiting').hide();
+		alert("Game Draw!!!");
+		fill_board();
+		update_info();
+		exit();
+	}
+
 	update_user();
 	update_info();
 	clearTimeout(timer);
@@ -247,8 +272,8 @@ function pick_result(data) {
 */
 
 function pick_error(data) {
-	var x = data.responseJSON;
-	alert(x.errormesg);
+		var x = data.responseJSON;
+		alert(x.errormesg);
 }
 
 /**
@@ -296,8 +321,8 @@ function place_result(data) {
  */
 
 function place_error(data) {
-	//var x = data.responseJSON;
-	//alert(x.errormesg);
+	var x = data.responseJSON;
+	alert(x.errormesg);
 
 }
 
