@@ -233,7 +233,7 @@ function do_place_piece($input)
     $st->execute();
     if (check_win($input['x'], $input['y'])) {
         global $mysqli;
-        $sql1 = 'UPDATE `game_status` SET `result`="W"';
+        $sql1 = 'UPDATE `game_status` SET `result`="W",`status`="ended"';
         $st1 = $mysqli->prepare($sql1);
         $st1->execute();
     } else {
@@ -319,13 +319,15 @@ function check_win($x, $y)
         array(1, 2, 5, 6, 9, 10, 13, 14)
     );
 
-    $hp = horisontal_pieces($y);
-    $vp = vertical_pieces($x);
+    $hp = horisontal_pieces($x);
+    $vp = vertical_pieces($y);
 
     if ($x == $y) {
+        $flag = "l";
         $ldp = check_left_diagonal_pieces();
         $possible_win_line = array($hp, $vp, $ldp);
     } elseif ($x + $y == 5) {
+        $flag = "r";
         $rdp = check_right_diagonal_pieces();
         $possible_win_line = array($hp, $vp, $rdp);
     } else {
@@ -335,12 +337,47 @@ function check_win($x, $y)
     for ($i = 0; $i < count($possible_win_line); $i++) {
         for ($j = 0; $j < count($attr_array); $j++) {
             if (count(array_intersect($possible_win_line[$i], $attr_array[$j])) == 4) {
+                set_win_direction($i, $flag, $x, $y);
                 return true;
             }
         }
     }
     return false;
 }
+
+/**
+ * sets the winning direction of the board
+ * @param int $i
+ * @param string $flag
+ * @param string $x    
+ * @param string $y
+ * 
+ */
+
+function set_win_direction($i, $flag, $x, $y)
+{
+    switch ($i) {
+        case 0:
+            $direction = "horisontal" . $x;
+            break;
+        case 1:
+            $direction = "vertical" . $y;
+            break;
+        case 2:
+            if ($flag == "l") {
+                $direction = "left diagonal_";
+            } else {
+                $direction = "right diagonal_";
+            }
+    }
+    global $mysqli;
+    $sql = 'UPDATE game_status SET win_direction=?';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('s', $direction);
+    $st->execute();
+}
+
+
 
 /**
  * reads all pieces on the horisontal(x) axis
@@ -350,7 +387,7 @@ function check_win($x, $y)
  * 
  */
 
-function horisontal_pieces($y)
+function horisontal_pieces($x)
 {
 
     $result = array();
@@ -358,7 +395,7 @@ function horisontal_pieces($y)
         global $mysqli;
         $sql = 'select piece from board where x=? and y=?';
         $st = $mysqli->prepare($sql);
-        $st->bind_param('ii', $i, $y);
+        $st->bind_param('ii', $x, $i);
         $st->execute();
         $res = $st->get_result();
         $res1 = $res->fetch_assoc();
@@ -375,14 +412,14 @@ function horisontal_pieces($y)
  * 
  */
 
-function vertical_pieces($x)
+function vertical_pieces($y)
 {
     $result = array();
     for ($i = 1; $i <= 4; $i++) {
         global $mysqli;
         $sql = 'select piece from board where x=? and y=?';
         $st = $mysqli->prepare($sql);
-        $st->bind_param('ii', $x, $i);
+        $st->bind_param('ii', $i, $y);
         $st->execute();
         $res = $st->get_result();
         $res1 = $res->fetch_assoc();

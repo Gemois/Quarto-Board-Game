@@ -1,10 +1,12 @@
 var me = { username: null, token: null, role: null };
-var game_status = { status: null, p_turn: null, current_piece: null, result: null, last_change: null };
+var game_status = { status: null, p_turn: null, current_piece: null, result: null, win_direction: null, last_change: null };
 var last_update = new Date().getTime();
 var timer = null;
 
 $(function () {
 	draw_empty_board();
+	$('#piece_selector_input').hide();
+	$('#piece_coordinates_input').hide();
 	$('#quatro_login').click(login_to_game);
 	$('#start_reset_game').click(reset_game);
 	$('#piece_selected').click(pick);
@@ -91,7 +93,8 @@ function update_info() {
 		+ game_status.status + "<strong> Player turn: </strong>"
 		+ game_status.p_turn + "<strong> Current Piece: </strong>"
 		+ game_status.current_piece + "<strong> Result: </strong>"
-		+ game_status.result);
+		+ game_status.result + "<strong> win_direction: </strong>"
+		+ game_status.win_direction);
 }
 
 /**
@@ -153,8 +156,10 @@ function update_status(data) {
 		$('#piece_coordinates_input').hide();
 		$('#waiting').hide();
 		if (game_status.p_turn != me.token) {
+			highlight_winning_pieces(game_status.win_direction);
 			alert("You Lost The Game!!! Good luck next time !!!")
 		} else {
+			highlight_winning_pieces(game_status.win_direction);
 			alert("You Won The Game!!!")
 		}
 		fill_board();
@@ -194,7 +199,57 @@ function update_status(data) {
 		timer = setTimeout(function () { game_status_update(); }, 1000);
 	}
 
+
 }
+
+/**
+ *Changes background color to winning squares
+ * * @param {string} win_direction
+ */
+
+function highlight_winning_pieces(win_direction) {
+	direction = win_direction.substring(0, win_direction.length - 1);
+	switch (direction) {
+		case 'vertical':
+			var y = win_direction.charAt(win_direction.length - 1);
+			for (var x = 1; x <= 4; x++) {
+				var id = '#square_' + x + '_' + y;
+				$(id).css('background-color', '#FC7E7E');
+			}
+			break;
+		case 'horisontal':
+			var x = win_direction.charAt(win_direction.length - 1);
+			for (var y = 1; y <= 4; y++) {
+				var id = '#square_' + x + '_' + y;
+				$(id).css('background-color', '#FC7E7E');
+			}
+			break;
+		case 'left diagonal':
+			for (var i = 1; i <= 4; i++) {
+				for (j = 1; j <= 4; j++) {
+					if (i == j) {
+						var id = '#square_' + i + '_' + j;
+						$(id).css('background-color', '#FC7E7E');
+					}
+				}
+			}
+			break;
+		case "right diagonal":
+
+			for (i = 1; i <= 4; i++) {
+				for (j = 1; j <= 4; j++) {
+					if (i + j == 5) {
+						var id = '#square_' + i + '_' + j;
+						$(id).css('background-color', '#FC7E7E');
+					}
+				}
+			}
+			break;
+		default: break;
+	}
+
+}
+
 
 
 /**
@@ -272,8 +327,8 @@ function pick_result(data) {
 */
 
 function pick_error(data) {
-		var x = data.responseJSON;
-		alert(x.errormesg);
+	var x = data.responseJSON;
+	alert(x.errormesg);
 }
 
 /**
