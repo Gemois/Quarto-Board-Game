@@ -67,6 +67,25 @@ function piece_list()
 }
 
 /**
+ * finds and returns player id using token
+ * @param $token 
+ * @return int player id
+ */
+
+
+function get_player_id($token)
+{
+    global $mysqli;
+    $sql = 'SELECT player_id from players where token=?';
+    $st = $mysqli->prepare($sql);
+    $st->bind_param('s', $token);
+    $st->execute();
+    $res = $st->get_result();
+    $id = $res->fetch_assoc();
+    return $id['player_id'];
+}
+
+/**
  * checks if player meets all requirmets to pick piece
  * @param $input json  
  * and then calls do_pick_piece
@@ -90,7 +109,7 @@ function pick_piece($input)
         print json_encode(['errormesg' => "Game is not in action."]);
         exit;
     }
-    if ($status['p_turn'] != $input['token']) {
+    if ($status['p_turn'] != get_player_id($input['token'])) {
         header("HTTP/1.1 400 Bad Request");
         print json_encode(['errormesg' => "It is not your turn."]);
         exit;
@@ -176,7 +195,7 @@ function place_piece($input)
         print json_encode(['errormesg' => "Game is not in action."]);
         exit;
     }
-    if ($status['p_turn'] != $input['token']) {
+    if ($status['p_turn'] != get_player_id($input['token'])) {
         header("HTTP/1.1 400 Bad Request");
         print json_encode(['errormesg' => "It is not your turn."]);
         exit;
@@ -224,18 +243,21 @@ function check_empty_square($x, $y)
 
 function do_place_piece($input)
 {
-    //$piece_id = curent_selected_piece();
-    $piece_id = $input['piece_id'];
     global $mysqli;
     $sql = 'call `place_piece`(?,?,?);';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('iii', $input['x'], $input['y'], $piece_id);
+    $st->bind_param('iii', $input['x'], $input['y'], curent_selected_piece());
     $st->execute();
     if (check_win($input['x'], $input['y'])) {
         global $mysqli;
         $sql1 = 'UPDATE `game_status` SET `result`="W",`status`="ended"';
         $st1 = $mysqli->prepare($sql1);
         $st1->execute();
+    } else if (check_draw()) {
+        global $mysqli;
+        $sql = 'UPDATE `game_status` SET `result`="D",`status`="ended"';
+        $st = $mysqli->prepare($sql);
+        $st->execute();
     } else {
         change_role_to_pick($input['token']);
         header('Content-type: application/json');
@@ -244,21 +266,41 @@ function do_place_piece($input)
 }
 
 /**
+ * checks if 16 pieces have been placed on the board and no player has won
+ * therefore game draw
+ * @return boolean if game draw
+ */
+
+function check_draw()
+{
+    global $mysqli;
+    $sql = 'select count(*) as p from board where piece is not null';
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $res = $st->get_result();
+    $count_piece = $res->fetch_assoc();
+    if ($count_piece['p'] == 16) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
  * finds current selected piece from game status table
  * @return int $res is piece_id
  */
 
-// function curent_selected_piece()
-// {
-
-//     global $mysqli;
-//     $sql = 'select current_piece from game_status ';
-//     $st = $mysqli->prepare($sql);
-//     $st->execute();
-//     $res = $st->get_result();
-//     $res->fetch_row(MYSQLI_ASSOC);
-//     return $res[0];
-// }
+function curent_selected_piece()
+{
+    global $mysqli;
+    $sql = 'select current_piece from game_status ';
+    $st = $mysqli->prepare($sql);
+    $st->execute();
+    $res = $st->get_result();
+    $current_piece = $res->fetch_assoc();
+    return $current_piece['current_piece'];
+}
 
 /**
  * sets user role to pick
@@ -282,16 +324,16 @@ function change_role_to_pick($token)
 function next_player($token)
 {
     global $mysqli;
-    $sql = 'SELECT token from players  where token!=?';
+    $sql = 'SELECT player_id from players  where token!=?';
     $st = $mysqli->prepare($sql);
     $st->bind_param('s', $token);
     $st->execute();
     $res = $st->get_result();
-    $token = $res->fetch_assoc();
+    $id = $res->fetch_assoc();
 
     $sql = 'UPDATE game_status SET p_turn=?';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('s', $token['token']);
+    $st->bind_param('s', $id['player_id']);
     $st->execute();
 }
 
@@ -376,8 +418,6 @@ function set_win_direction($i, $flag, $x, $y)
     $st->bind_param('s', $direction);
     $st->execute();
 }
-
-
 
 /**
  * reads all pieces on the horisontal(x) axis

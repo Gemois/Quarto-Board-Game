@@ -82,23 +82,5 @@ function update_game_status()
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('s', $new_status);
 	$st->execute();
-
-	$sql4 = 'SELECT count(*) as p from board where piece is not null';
-	$st1 = $mysqli->prepare($sql4);
-	$st1->execute();
-	$res = $st1->get_result();
-	$pieces_count = $res->fetch_assoc();
-
-	$sql5 = 'SELECT result  from game_status';
-	$st2 = $mysqli->prepare($sql5);
-	$st2->execute();
-	$res1 = $st2->get_result();
-	$result = $res1->fetch_assoc();
-
-	if ($pieces_count['p'] == 16 && $result['result'] == null) {
-		$sql6 = 'UPDATE game_status SET result="D"';
-		$st3 = $mysqli->prepare($sql6);
-		$st3->execute();
-	}
 }
 ?>

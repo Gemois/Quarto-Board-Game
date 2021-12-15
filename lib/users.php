@@ -9,7 +9,7 @@
 function show_users()
 {
 	global $mysqli;
-	$sql = 'select username,token from players';
+	$sql = 'select username,player_id from players';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
@@ -26,7 +26,7 @@ function show_users()
 function show_user($token)
 {
 	global $mysqli;
-	$sql = 'select username,token,role from players where token=?';
+	$sql = 'select username,player_id,token,role from players where token=?';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('s', $token);
 	$st->execute();
@@ -77,12 +77,15 @@ function register_first_player($username)
 	$st->bind_param('ss', $username, $username);
 	$st->execute();
 
-	$sql = 'select token from players';
+	$id = $mysqli->insert_id;
+	$sql = 'select token from players where player_id=?';
 	$st = $mysqli->prepare($sql);
+	$st->bind_param('i', $id);
 	$st->execute();
 	$res = $st->get_result();
 	$token = $res->fetch_assoc();
-	set_current_turn($token['token']);
+
+	set_current_turn($id);
 	show_user($token['token']);
 }
 
@@ -92,12 +95,12 @@ function register_first_player($username)
  *  called while there is only the first player 
  */
 
-function set_current_turn($token)
+function set_current_turn($id)
 {
 	global $mysqli;
 	$sql = 'UPDATE `game_status` SET p_turn=?';
 	$st = $mysqli->prepare($sql);
-	$st->bind_param('s', $token);
+	$st->bind_param('i', $id);
 	$st->execute();
 }
 

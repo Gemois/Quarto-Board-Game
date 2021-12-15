@@ -1,4 +1,4 @@
-var me = { username: null, token: null, role: null };
+var me = { username: null, player_id: null, token: null, role: null };
 var game_status = { status: null, p_turn: null, current_piece: null, result: null, win_direction: null, last_change: null };
 var last_update = new Date().getTime();
 var timer = null;
@@ -7,6 +7,9 @@ $(function () {
 	draw_empty_board();
 	$('#piece_selector_input').hide();
 	$('#piece_coordinates_input').hide();
+	$('#winner').hide();
+	$('#loser').hide();
+	$('#draw').hide();
 	$('#quatro_login').click(login_to_game);
 	$('#start_reset_game').click(reset_game);
 	$('#piece_selected').click(pick);
@@ -86,15 +89,17 @@ function login_error(data) {
  */
 
 function update_info() {
-	$('#player_info').html("<h3>Player info =></h3><strong> Username:</strong>"
-		+ me.username + "<strong> token: </strong>"
+	$('#player_info').html("<h4>Player info</h4><strong> Username:</strong>"
+		+ me.username + "<strong> id: </strong>"
+		+ me.player_id + "<strong> token: </strong>"
 		+ me.token + "<strong> Player role: </strong> "
-		+ me.role + "<strong> Game state: </strong>"
+		+ me.role + "<br><h4>Game info</h4><strong> Game state: </strong>"
 		+ game_status.status + "<strong> Player turn: </strong>"
 		+ game_status.p_turn + "<strong> Current Piece: </strong>"
 		+ game_status.current_piece + "<strong> Result: </strong>"
 		+ game_status.result + "<strong> win_direction: </strong>"
-		+ game_status.win_direction);
+		+ game_status.win_direction + "<strong> Last_change: </strong>"
+		+ game_status.last_change);
 }
 
 /**
@@ -148,19 +153,18 @@ function save_player_info(data) {
  */
 
 function update_status(data) {
-
 	last_update = new Date().getTime();
 	game_status = data[0];
 	if (game_status.result == "W") {
 		$('#piece_selector_input').hide();
 		$('#piece_coordinates_input').hide();
 		$('#waiting').hide();
-		if (game_status.p_turn != me.token) {
+		if (game_status.p_turn != me.player_id) {
 			highlight_winning_pieces(game_status.win_direction);
-			alert("You Lost The Game!!! Good luck next time !!!")
+			$('#loser').show(1000);
 		} else {
 			highlight_winning_pieces(game_status.win_direction);
-			alert("You Won The Game!!!")
+			$('#winner').show(1000);
 		}
 		fill_board();
 		update_info();
@@ -169,16 +173,15 @@ function update_status(data) {
 		$('#piece_selector_input').hide();
 		$('#piece_coordinates_input').hide();
 		$('#waiting').hide();
-		alert("Game Draw!!!");
+		$('#draw').show(1000);
 		fill_board();
 		update_info();
 		exit();
 	}
-
 	update_user();
 	update_info();
 	clearTimeout(timer);
-	if (game_status.p_turn == me.token && me.role != null) {
+	if (game_status.p_turn == me.player_id && me.role != null) {
 		fill_board();
 		if (me.role == "pick") {
 
@@ -198,8 +201,6 @@ function update_status(data) {
 		$('#piece_coordinates_input').hide(1000);
 		timer = setTimeout(function () { game_status_update(); }, 1000);
 	}
-
-
 }
 
 /**
@@ -247,7 +248,6 @@ function highlight_winning_pieces(win_direction) {
 			break;
 		default: break;
 	}
-
 }
 
 
@@ -296,9 +296,7 @@ function current_piece() {
 */
 
 function pick() {
-
 	var s = $('#piece_selector').val();
-
 
 	$.ajax({
 		url: "quarto.php/board/piece/pick/",
@@ -342,7 +340,6 @@ function do_place() {
 	piece_list();
 	var s = $('#piece_coordinates').val();
 	var a = s.trim().split(/[ ]+/);
-	var p = game_status.current_piece;
 	if (a.length != 2) {
 		alert('Must give 2 numbers');
 		return;
@@ -352,7 +349,7 @@ function do_place() {
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
-		data: JSON.stringify({ x: a[0], y: a[1], piece_id: p }),
+		data: JSON.stringify({ x: a[0], y: a[1] }),
 		headers: { "X-Token": me.token },
 		success: place_result,
 		error: place_error
