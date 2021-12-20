@@ -53,7 +53,7 @@ function reset_board()
 /**
  * prints the available pieces
  * availability can be true or false
- * @return json  all pieces_id 
+ * @return json   pieces_id 
  */
 
 function piece_list()
@@ -76,13 +76,13 @@ function piece_list()
 function get_player_id($token)
 {
     global $mysqli;
-    $sql = 'SELECT player_id from players where token=?';
+    $sql = 'select player_id as "key" from players where token=?';
     $st = $mysqli->prepare($sql);
     $st->bind_param('s', $token);
     $st->execute();
     $res = $st->get_result();
-    $id = $res->fetch_assoc();
-    return $id['player_id'];
+    $player_id = $res->fetch_assoc();
+    return $player_id['key'];
 }
 
 /**
@@ -177,7 +177,7 @@ function change_role_place($token)
 }
 
 /**
- * checks if player meets all requirmets to place piece
+ * checks if player meets all requirements to place piece
  * @param $input json  
  * and then calls do_place_piece
  */
@@ -246,7 +246,8 @@ function do_place_piece($input)
     global $mysqli;
     $sql = 'call `place_piece`(?,?,?);';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('iii', $input['x'], $input['y'], curent_selected_piece());
+    $piece_id = curent_selected_piece();
+    $st->bind_param('iii', $input['x'], $input['y'], $piece_id);
     $st->execute();
     if (check_win($input['x'], $input['y'])) {
         global $mysqli;
@@ -268,18 +269,18 @@ function do_place_piece($input)
 /**
  * checks if 16 pieces have been placed on the board and no player has won
  * therefore game draw
- * @return boolean if game draw
+ * @return boolean 
  */
 
 function check_draw()
 {
     global $mysqli;
-    $sql = 'select count(*) as p from board where piece is not null';
+    $sql = 'select count(*) as c from board where piece is not null';
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res = $st->get_result();
     $count_piece = $res->fetch_assoc();
-    if ($count_piece['p'] == 16) {
+    if ($count_piece['c'] == 16) {
         return true;
     } else {
         return false;
@@ -288,18 +289,18 @@ function check_draw()
 
 /**
  * finds current selected piece from game status table
- * @return int $res is piece_id
+ * @return int $current_piece
  */
 
 function curent_selected_piece()
 {
     global $mysqli;
-    $sql = 'select current_piece from game_status ';
+    $sql = 'select current_piece as "key" from game_status ';
     $st = $mysqli->prepare($sql);
     $st->execute();
     $res = $st->get_result();
     $current_piece = $res->fetch_assoc();
-    return $current_piece['current_piece'];
+    return $current_piece['key'];
 }
 
 /**
@@ -324,16 +325,16 @@ function change_role_to_pick($token)
 function next_player($token)
 {
     global $mysqli;
-    $sql = 'SELECT player_id from players  where token!=?';
+    $sql = 'select player_id as "key" from players  where token!=?';
     $st = $mysqli->prepare($sql);
     $st->bind_param('s', $token);
     $st->execute();
     $res = $st->get_result();
-    $id = $res->fetch_assoc();
+    $player_id = $res->fetch_assoc();
 
     $sql = 'UPDATE game_status SET p_turn=?';
     $st = $mysqli->prepare($sql);
-    $st->bind_param('s', $id['player_id']);
+    $st->bind_param('s', $player_id['key']);
     $st->execute();
 }
 
@@ -351,14 +352,14 @@ function next_player($token)
 function check_win($x, $y)
 {
     $attr_array = array(
-        array(1, 2, 3, 4, 5, 6, 7, 8),
-        array(9, 10, 11, 12, 13, 14, 15, 16),
-        array(5, 6, 7, 8, 13, 14, 15, 16),
-        array(1, 2, 3, 4, 9, 10, 11, 12),
-        array(2, 4, 6, 8, 10, 12, 14, 16),
-        array(1, 3, 5, 7, 9, 11, 13, 15),
-        array(3, 4, 7, 8, 11, 12, 15, 16),
-        array(1, 2, 5, 6, 9, 10, 13, 14)
+        array(1, 2, 3, 4, 5, 6, 7, 8),        //white pieces
+        array(9, 10, 11, 12, 13, 14, 15, 16), //black pieces
+        array(5, 6, 7, 8, 13, 14, 15, 16),    //round pieces
+        array(1, 2, 3, 4, 9, 10, 11, 12),     //square pieces
+        array(2, 4, 6, 8, 10, 12, 14, 16),    //hollow top pieces
+        array(1, 3, 5, 7, 9, 11, 13, 15),     //solid top pieces
+        array(3, 4, 7, 8, 11, 12, 15, 16),    //short pieces
+        array(1, 2, 5, 6, 9, 10, 13, 14)      //tall pieces
     );
 
     $hp = horisontal_pieces($x);
@@ -422,114 +423,106 @@ function set_win_direction($i, $flag, $x, $y)
 /**
  * reads all pieces on the horisontal(x) axis
  * @param string $x    
- * @param string $y
- * @return array $res
+ * @return array $row
  * 
  */
 
 function horisontal_pieces($x)
 {
 
-    $result = array();
+    $row = array();
     for ($i = 1; $i <= 4; $i++) {
         global $mysqli;
-        $sql = 'select piece from board where x=? and y=?';
+        $sql = 'select piece as "key" from board where x=? and y=?';
         $st = $mysqli->prepare($sql);
         $st->bind_param('ii', $x, $i);
         $st->execute();
         $res = $st->get_result();
-        $res1 = $res->fetch_assoc();
-        array_push($result, $res1['piece']);
+        $piece = $res->fetch_assoc();
+        array_push($row, $piece['key']);
     }
-    return $result;
+    return $row;
 }
 
 /**
- * reads all pieces on the vertical(y) axis
- * @param string $x    
+ * reads all pieces on the vertical(y) axis   
  * @param string $y
- * @return array $res
+ * @return array $column
  * 
  */
 
 function vertical_pieces($y)
 {
-    $result = array();
+    $column = array();
     for ($i = 1; $i <= 4; $i++) {
         global $mysqli;
-        $sql = 'select piece from board where x=? and y=?';
+        $sql = 'select piece as "key" from board where x=? and y=?';
         $st = $mysqli->prepare($sql);
         $st->bind_param('ii', $i, $y);
         $st->execute();
         $res = $st->get_result();
-        $res1 = $res->fetch_assoc();
-        array_push($result, $res1['piece']);
+        $piece = $res->fetch_assoc();
+        array_push($column, $piece['key']);
     }
-    return $result;
+    return $column;
 }
 
 /**
  * reads all pieces on the left diagonal 
- * @param string $x    
- * @param string $y
- * @return array $res
+ * @return array $diagonal
  * 
  */
 
 
 function check_left_diagonal_pieces()
 {
-    $result = array();
+    $diagonal = array();
     for ($i = 1; $i <= 4; $i++) {
         for ($j = 1; $j <= 4; $j++) {
             if ($i == $j) {
                 global $mysqli;
-                $sql = 'select piece from board where x=? and y=?';
+                $sql = 'select piece as "key" from board where x=? and y=?';
                 $st = $mysqli->prepare($sql);
                 $st->bind_param('ii', $i, $j);
                 $st->execute();
                 $res = $st->get_result();
                 if ($res) {
-                    $res1 = $res->fetch_assoc();
-                    array_push($result, $res1['piece']);
+                    $piece = $res->fetch_assoc();
+                    array_push($diagonal, $piece['key']);
                 } else {
-                    array_push($result, 0);
+                    array_push($diagonal, 0);
                 }
             }
         }
     }
-    return $result;
+    return $diagonal;
 }
 
 /**
  * reads all pieces on the right diagonal 
- * @param string $x    
- * @param string $y
- * @return array $res
- * 
+ * @return array $diagonal
  */
 
 function check_right_diagonal_pieces()
 {
-    $result = array();
+    $diagonal = array();
     for ($i = 1; $i <= 4; $i++) {
         for ($j = 1; $j <= 4; $j++) {
             if ($i + $j == 5) {
                 global $mysqli;
-                $sql = 'select piece from board where x=? and y=?';
+                $sql = 'select piece as "key" from board where x=? and y=?';
                 $st = $mysqli->prepare($sql);
                 $st->bind_param('ii', $i, $j);
                 $st->execute();
                 $res = $st->get_result();
                 if ($res) {
-                    $res1 = $res->fetch_assoc();
-                    array_push($result, $res1['piece']);
+                    $piece = $res->fetch_assoc();
+                    array_push($diagonal, $piece['key']);
                 } else {
-                    array_push($result, 0);
+                    array_push($diagonal, 0);
                 }
             }
         }
     }
-    return $result;
+    return $diagonal;
 }
-?>

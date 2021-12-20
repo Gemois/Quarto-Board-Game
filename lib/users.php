@@ -1,15 +1,14 @@
 <?php
 
 /**
- * prints all users.
- *
- * for every user prints their username and token.
+ * returns all users
+ * for every user prints their username,id,role.
  */
 
 function show_users()
 {
 	global $mysqli;
-	$sql = 'select username,player_id from players';
+	$sql = 'select username,player_id,role from players';
 	$st = $mysqli->prepare($sql);
 	$st->execute();
 	$res = $st->get_result();
@@ -26,7 +25,7 @@ function show_users()
 function show_user($token)
 {
 	global $mysqli;
-	$sql = 'select username,player_id,token,role from players where token=?';
+	$sql = 'select username,player_id,token,role,last_action from players where token=?';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('s', $token);
 	$st->execute();
@@ -78,7 +77,7 @@ function register_first_player($username)
 	$st->execute();
 
 	$id = $mysqli->insert_id;
-	$sql = 'select token from players where player_id=?';
+	$sql = 'select token as "key" from players where player_id=?';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('i', $id);
 	$st->execute();
@@ -86,7 +85,7 @@ function register_first_player($username)
 	$token = $res->fetch_assoc();
 
 	set_current_turn($id);
-	show_user($token['token']);
+	show_user($token['key']);
 }
 
 /**
@@ -119,17 +118,17 @@ function register_second_player($username)
 	$st->execute();
 
 	$id = $mysqli->insert_id;
-	$sql = 'select token from players where player_id=?';
+	$sql = 'select token as "key" from players where player_id=?';
 	$st = $mysqli->prepare($sql);
 	$st->bind_param('i', $id);
 	$st->execute();
 	$res = $st->get_result();
 	$token = $res->fetch_assoc();
-	show_user($token['token']);
+	show_user($token['key']);
 }
 
 /**
- * redirects http request to the appropriate function call
+ * redirects HTTP request to the appropriate function call
  * @param string  $method
  * @param array  $input
  */
