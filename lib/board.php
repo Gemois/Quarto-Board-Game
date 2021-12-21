@@ -2,7 +2,7 @@
 
 /**
  * prints board
- * @param json $input 
+ * @param array $input 
  * prints board using json format 
  */
 
@@ -93,6 +93,7 @@ function get_player_id($token)
 
 function pick_piece($input)
 {
+
     if ($input['piece_id'] == "") {
         header("HTTP/1.1 400 Bad Request");
         print json_encode(['errormesg' => "piece is not set."]);
@@ -119,7 +120,7 @@ function pick_piece($input)
 
 /**
  * picks the piece for other player to place
- * @param int $piece_id contains the id of the piece
+ * @param array $input
  * id is [1-16] 
  * calls make_piece_unavelable
  * calls set_current_piece
@@ -131,6 +132,7 @@ function do_pick_piece($input)
     set_current_piece($input['piece_id']);
     change_role_place($input['token']);
     next_player($input['token']);
+    print json_encode(['data' => "valid pick"]);
 }
 
 
@@ -235,8 +237,7 @@ function check_empty_square($x, $y)
 
 /**
  * picks the piece for other player to place
- * @param int $piece_id contains the id of the piece
- * id is [1-16] 
+ * @param array $input
  * calls curent_selected_piece
  * calls change_role
  */

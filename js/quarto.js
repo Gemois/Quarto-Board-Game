@@ -2,9 +2,9 @@ var me = { username: null, player_id: null, token: null, role: null, last_action
 var game_status = { status: null, p_turn: null, current_piece: null, result: null, win_direction: null, last_change: null };
 var last_update = new Date().getTime();
 var timer = null;
+var click_mode = false;
 
 $(function () {
-
 	draw_empty_board();
 	$('#piece_selector_input').hide();
 	$('#piece_coordinates_input').hide();
@@ -13,6 +13,7 @@ $(function () {
 	$('#loser').hide();
 	$('#draw').hide();
 	$('#aborted').hide();
+	$('#remaining_pieces').hide();
 
 	$('#quatro_login').click(login_to_game);
 	$('#start_reset_game').click(reset_game);
@@ -143,6 +144,7 @@ function update_user() {
 /**
  * updates  local users info
  * stores the changes
+ * @param {json} data
  */
 
 function save_player_info(data) {
@@ -162,6 +164,7 @@ function save_player_info(data) {
 function update_status(data) {
 	last_update = new Date().getTime();
 	game_status = data[0];
+	Check_input_mode();
 	if (game_status.status == "aborded") {
 		$('#piece_selector_input').hide();
 		$('#piece_coordinates_input').hide();
@@ -202,12 +205,20 @@ function update_status(data) {
 			fill_board();
 			if (me.role == "pick") {
 				$('#piece_selector_input').show(1000);
+				if (click_mode) {
+					$('#text_input_pick').hide();
+				} else { $('#text_input_pick').show(1000); }
 				$('#piece_coordinates_input').hide();
 				timer = setTimeout(function () { game_status_update(); }, 1000);
 			} else {
 				$('#waiting').hide();
 				current_piece();
+				piece_list();
 				$('#piece_coordinates_input').show(1000);
+				if (click_mode) {
+					$('#text_input_place').hide();
+				} else { $('#text_input_place').show(1000); }
+				$('#remaining_pieces').show(1000);
 				timer = setTimeout(function () { game_status_update(); }, 1000);
 			}
 		} else {
@@ -223,14 +234,15 @@ function update_status(data) {
 /**
  *Changes background color to winning squares
  *  @param {string} win_direction
+ * * @param {string} flag
  */
 
-function highlight_winning_pieces(win_direction, $flag) {
+function highlight_winning_pieces(win_direction, flag) {
 
-	if ($flag == "win") {
-		$color = '#2da631';
+	if (flag == "win") {
+		color = '#2da631';
 	} else {
-		$color = '#FC7E7E';
+		color = '#FC7E7E';
 	}
 	direction = win_direction.substring(0, win_direction.length - 1);
 	switch (direction) {
@@ -239,14 +251,14 @@ function highlight_winning_pieces(win_direction, $flag) {
 			for (var x = 1; x <= 4; x++) {
 				var id = '#square_' + x + '_' + y;
 
-				$(id).css('background-color', $color);
+				$(id).css('background-color', color);
 			}
 			break;
 		case 'horisontal':
 			var x = win_direction.charAt(win_direction.length - 1);
 			for (var y = 1; y <= 4; y++) {
 				var id = '#square_' + x + '_' + y;
-				$(id).css('background-color', $color);
+				$(id).css('background-color', color);
 			}
 			break;
 		case 'left diagonal':
@@ -254,7 +266,7 @@ function highlight_winning_pieces(win_direction, $flag) {
 				for (j = 1; j <= 4; j++) {
 					if (i == j) {
 						var id = '#square_' + i + '_' + j;
-						$(id).css('background-color', $color);
+						$(id).css('background-color', color);
 					}
 				}
 			}
@@ -265,7 +277,7 @@ function highlight_winning_pieces(win_direction, $flag) {
 				for (j = 1; j <= 4; j++) {
 					if (i + j == 5) {
 						var id = '#square_' + i + '_' + j;
-						$(id).css('background-color', $color);
+						$(id).css('background-color', color);
 					}
 				}
 			}
@@ -290,17 +302,18 @@ function fill_board() {
 /**
  *fills board table dynamically with given state of board 
  *and adds image representation of the piece
+ * @param {json} data
  */
 
 function fill_board_by_data(data) {
 
 	for (var i = 0; i < data.length; i++) {
-		var o = data[i];
-		var id = '#square_' + o.x + '_' + o.y;
-		if (o.piece == null) {
-			var im = '<img class="piece" src="images/p.png"></BR> ' + o.x + ',' + o.y + '  </img>';
+		var board = data[i];
+		var id = '#square_' + board.x + '_' + board.y;
+		if (board.piece == null) {
+			var im = '<img class="piece" src="images/p.png"></BR> ' + board.x + ',' + board.y + '  </img>';
 		} else {
-			var im = '<img class="piece" src="images/p' + o.piece + '.png"></BR> ' + o.x + ',' + o.y + '  </img>';
+			var im = '<img class="piece" src="images/p' + board.piece + '.png"></BR> ' + board.x + ',' + board.y + '  </img>';
 		}
 		$(id).html(im);
 	}
@@ -320,14 +333,14 @@ function current_piece() {
 */
 
 function pick() {
-	var s = $('#piece_selector').val();
+	var p_id = $('#piece_selector').val();
 
 	$.ajax({
 		url: "quarto.php/board/piece/pick/",
 		method: 'PUT',
 		dataType: "json",
 		contentType: 'application/json',
-		data: JSON.stringify({ piece_id: s }),
+		data: JSON.stringify({ piece_id: p_id }),
 		headers: { "X-Token": me.token },
 		success: pick_result,
 		error: pick_error
@@ -337,6 +350,7 @@ function pick() {
 /**
 * if place request succesful 
 * updates status
+* @param {json} data
 */
 
 function pick_result(data) {
@@ -436,9 +450,11 @@ function empty_piece_list() {
 
 function update_piece_selector(list) {
 	var piece_list = JSON.parse(list);
+	var remaining_piece_options = "";
 	for (var i = 0; i < piece_list.length; i++) {
-		$('#piece_selector').append("<option id=\"option_" + piece_list[i] + "\" value=\"" + piece_list[i] + "\">" + piece_list[i] + "</option>");
+		remaining_piece_options += "<option id=\"option_" + piece_list[i] + "\" value=\"" + piece_list[i] + "\">" + piece_list[i] + "</option>";
 	}
+	$('#piece_selector').html(remaining_piece_options);
 	update_pieces_remaining_images(piece_list);
 }
 
@@ -448,9 +464,14 @@ function update_piece_selector(list) {
 */
 
 function update_pieces_remaining_images(list) {
+	var remaining_images_place = "<h4>Remaining Pieces </h4><br>";
+	var remainig_images_pick = "";
 	for (var i = 0; i < list.length; i++) {
-		$('#piece_images').append("<img class=\"piece_image\" id=\"" + list[i] + "\" src=\"images/available_images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">");
+		remainig_images_pick += "<img class=\"piece_image\" id=\"" + list[i] + "\" src=\"images/available_images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">";
+		remaining_images_place += "<img src=\"images/available_images/p" + list[i] + ".png\" alt=\"Piece :" + list[i] + "\">";
 	}
+	$('#piece_images').html(remainig_images_pick)
+	$('#remaining_pieces').html(remaining_images_place);
 }
 
 /**
@@ -468,14 +489,30 @@ function reset_game() {
 }
 
 /**
+*checks mode status
+*and sets the flag  appropriately
+*/
+
+function Check_input_mode() {
+	var mode = $('#mode').val();
+	if (mode == "onclick") {
+		click_mode = true;
+	} else {
+		click_mode = false;
+	}
+}
+
+/**
 *allows click funcionality for placing a piece on the board
 *retrieves id of a clicked board cell and gets coordinates x,y
 *then automatically calls the place function
 */
 
 function click_place(event) {
+	Check_input_mode();
 	if (me.player_id != game_status.p_turn) { return; }
 	if (me.role == "pick") { return; }
+	if (me.token == null) { return; }
 	if (me.player_id != game_status.p_turn) { return; }
 	$('.quarto_square').css('background-color', 'rgb(238, 237, 237)');
 	var element = event.target;
@@ -486,7 +523,9 @@ function click_place(event) {
 	$('#piece_coordinates').val(cordinates[1] + ' ' + cordinates[2]).change();
 	var td_id = '#square_' + cordinates[1] + '_' + cordinates[2];
 	$(td_id).css('background-color', '#8A2BE2');
-	do_place();
+	if (click_mode) {
+		do_place();
+	}
 }
 
 /**
@@ -496,8 +535,10 @@ function click_place(event) {
 */
 
 function click_pick(event) {
+	Check_input_mode();
 	if (me.player_id != game_status.p_turn) { return; }
 	if (me.role == "place") { return; }
+	if (me.token == null) { return; }
 	if (me.player_id != game_status.p_turn) { return; }
 	$('.piece_image').css('border', "0px");
 	var element = event.target;
@@ -506,5 +547,7 @@ function click_pick(event) {
 	$('#piece_selector').val(id).change();
 	var id1 = '#' + id;
 	$(id1).css('border', "solid 2px purple");
-	pick();
+	if (click_mode) {
+		pick();
+	}
 }
