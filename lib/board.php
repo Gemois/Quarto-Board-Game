@@ -527,3 +527,4 @@ function check_right_diagonal_pieces()
     }
     return $diagonal;
 }
+?>

@@ -206,9 +206,9 @@ function update_status(data) {
 			if (me.role == "pick") {
 				$('#piece_selector_input').show(1000);
 				if (click_mode) {
-					$('#text_input_pick').hide();
+					$('#text_input_pick').hide(1000);
 				} else { $('#text_input_pick').show(1000); }
-				$('#piece_coordinates_input').hide();
+				$('#piece_coordinates_input').hide(1000);
 				timer = setTimeout(function () { game_status_update(); }, 1000);
 			} else {
 				$('#waiting').hide();
@@ -216,7 +216,7 @@ function update_status(data) {
 				piece_list();
 				$('#piece_coordinates_input').show(1000);
 				if (click_mode) {
-					$('#text_input_place').hide();
+					$('#text_input_place').hide(1000);
 				} else { $('#text_input_place').show(1000); }
 				$('#remaining_pieces').show(1000);
 				timer = setTimeout(function () { game_status_update(); }, 1000);
@@ -480,13 +480,18 @@ function update_pieces_remaining_images(list) {
 */
 
 function reset_game() {
-	$.ajax({
-		url: "quarto.php/board/",
-		method: "POST",
-		success: (function () { location.reload(); }),
-		headers: { "X-Token": me.token }
-	});
+	try {
+		$.ajax({
+			url: "quarto.php/board/",
+			method: "POST",
+			success: (function () { location.reload(); }),
+			headers: { "X-Token": me.token }
+		});
+	} catch (exception) {
+		location.reload();
+	}
 }
+
 
 /**
 *checks mode status
