@@ -1,218 +1,191 @@
+# QUARTO BOARD GAME PROJECT
 
-# QUARTO  BOARD GAME PROJECT
-Αυτό το  project υλοποιήθηκε στα πλαίσια του μαθήματος Ανάπτυξη Διαδικτυακών  
-Συστημάτων και Εφαρμογών του Τμήματος Μηχανικών Πληροφορικής και Ηλεκτρονικών Συστημάτων ΔΙΠΑΕ
-# Demo Page
-Μπορείτε να  επισκεφτείτε την σελίδα
-https://users.iee.ihu.gr/~it174881/ADISE21_174881/
-και να παίξετε την τελευταία έκδοση του παιχνιδιού.<br>
-Σημείωση : πρέπει να πατήσετε το start button πριν κάνετε login στο παιχνίδι για να ξεκινήσει.<br>
-Προσοχή : το start button πρέπει να πατηθεί μόνο μια φορά και μόνο από έναν browser, στην συνέχεια μπορούν να συνδεθούν οι παίκτες.
+This project was implemented as part of the course *Development of Web Systems and Applications* at the Department of Information and Electronic Engineering, International Hellenic University (IHU).
+
+---
+
+## Demo Page
+You can visit the page:  [Quarto Demo](https://users.iee.ihu.gr/~it174881/ADISE21_174881/)  
+to play the latest version of the game.  
+
+**Note**: You must click the "Start" button before logging into the game to begin.  
+**Caution**: The "Start" button should only be clicked once and from one browser. Afterward, players can log in and join the game.
 
 <img src="/quarto_demo.gif">
 
-# Εγκατάσταση
+---
 
-## Απαιτήσεις
+## Installation
 
-* Apache2
-* Mysql Server
-* php
-## Οδηγίες Εγκατάστασης
+### Requirements
+* Apache2  
+* MySQL Server  
+* PHP  
 
- * Κάντε clone το project σε κάποιον φάκελο 
-  `$ git clone https://github.com/iee-ihu-gr-course1941/ADISE21_174881.git`
+### Installation Instructions
+1. Clone the project into a directory:  
+   ```bash
+   $ git clone https://github.com/iee-ihu-gr-course1941/ADISE21_174881.git
+   ```
+2. Ensure the directory is accessible by the Apache server. You might need to set the following permissions.
 
- * Βεβαιωθείτε ότι ο φάκελος είναι προσβάσιμος από τον Apache Server. πιθανόν να χρειαστεί να καθορίσετε τις παρακάτω ρυθμίσεις.
+3. Create a MySQL database named `adise_quarto_db` and import the data from the `schema.sql` file.
 
- * Θα πρέπει να δημιουργήσετε στην Mysql την βάση με όνομα 'adise_quarto_db' και να φορτώσετε σε αυτήν την βάση τα δεδομένα από το αρχείο schema.sql
+4. Create the file `lib/config_local.php` with the following content:
+   ```php
+   <?php
+   $DB_PASS = 'your_password';
+   $DB_USER = 'your_username';
+   ?>
+   ```
 
- * Θα πρέπει να φτιάξετε το αρχείο lib/config_local.php το οποίο να περιέχει:
-```
-    <?php
-	$DB_PASS = 'κωδικός';
-	$DB_USER = 'όνομα χρήστη';
-    ?>
-```
-# Περιγραφή Παιχνιδιού
+---
 
+## Game Description
 
-Το Quarto είναι ένα επιτραπέζιο παιχνίδι για δύο παίκτες που εφευρέθηκε από τον Ελβετό μαθηματικό Blaise Müller.
+**Quarto** is a board game for two players, invented by Swiss mathematician Blaise Müller.
 
-Το παιχνίδι παίζεται σε ταμπλό 4×4.
- Υπάρχουν 16 μοναδικά κομμάτια για να παίξετε, καθένα από τα οποία είναι είτε:
-```
- - ψηλό ή κοντό
- - άσπρο  ή καφέ (ή ένα διαφορετικό ζευγάρι χρωμάτων).
- - τετράγωνο ή κυκλικό 
- - με βαθουλωτή κορυφή ή συμπαγής κορυφή.
- ```
-Οι παίκτες διαλέγουν εκ περιτροπής ένα κομμάτι το οποίο πρέπει να τοποθετήσει ο άλλος παίκτης στο ταμπλό. Ένας παίκτης κερδίζει τοποθετώντας ένα κομμάτι στον πίνακα που σχηματίζει μια οριζόντια, κάθετη ή διαγώνια σειρά τεσσάρων κομματιών, τα οποία έχουν όλα μια κοινή ιδιότητα (όλα κοντά, όλα κυκλικά κ.λπ.).
+### Gameplay:
+The game is played on a 4×4 board. There are 16 unique pieces, each with four binary attributes:  
+* **Height**: Tall or Short  
+* **Color**: Light or Dark (or any two chosen colors)  
+* **Shape**: Square or Round  
+* **Top**: Hollow or Solid  
 
+Players take turns selecting a piece for their opponent, who must place it on the board. A player wins by forming a horizontal, vertical, or diagonal row of four pieces that share a common attribute (e.g., all tall, all round, etc.).
 
+---
 
-## Συντελεστές
- Μωυσίδης Γέωργιος 174881  : Jquery , PHP API ,  Σχεδιασμός mysql
+## Contributors
+- **Moisidis Georgios 174881**: Jquery, PHP API, MySQL design
 
-# Περιγραφή API
+---
 
-## Methods
+## API Documentation
 
+### Methods
 
-### Board
-#### Ανάγνωση Board
+#### **Board**
 
+##### Read Board
 ```
 GET /board/
 ```
+Returns the current [Board](#board) state.
 
-Επιστρέφει το [Board](#Board).
-
-#### Αρχικοποίηση Board
+##### Initialize Board
 ```
 POST /board/
 ```
+Initializes the board, resetting the game state. Returns the [Board](#board) state.
 
-Αρχικοποιεί το Board, δηλαδή το παιχνίδι. Γίνονται reset τα πάντα σε σχέση με το παιχνίδι.
-Επιστρέφει το [Board](#Board).
+#### **Piece**
 
-### Piece
-#### 'Επιλογή Πιονιού Για  Τον Άλλο Παίκτη
-
+##### Select Piece for Opponent
 ```
 PUT /board/piece/pick/
 ```
-Json Data:
+**JSON Data**:  
+| Field      | Description             | Required |
+|------------|-------------------------|----------|
+| `piece_id` | Unique ID of the piece  | Yes      |
 
-| Field             | Description                 | Required   |
-| ----------------- | --------------------------- | ---------- |
-| `piece_id`        | μοναδικος αριθμος Πιονιού   | yes        |
+Selects a piece that the opponent must place. Updates the game status for `current_piece`.
 
-Επιλέγει το πιόνι που πρέπει να παίκτη από τον άλλο παίκτη
-Ενημερώνει το game status για το current_piece.
-
-#### Επιστροφή αχρησιμοποίητων πιονιών 
-
+##### Get Unused Pieces
 ```
 GET /board/piece/pick
 ```
-Επιστρέφει τα στοιχεία από το [Pieces](#Pieces) με pieces_id.
-Ώστε να ενημερώνει για τα πιόνια που μπορούν να παιχτούν.
+Returns data from [Pieces](#pieces), listing `piece_id` for pieces that can still be played.
 
-#### Τοποθέτηση πιονιού στο board
-
+##### Place Piece on Board
 ```
 PUT /board/piece/place/
 ```
-Json Data:
+**JSON Data**:  
+| Field      | Description           | Required |
+|------------|-----------------------|----------|
+| `x`        | X coordinate on board | Yes      |
+| `y`        | Y coordinate on board | Yes      |
+| `piece_id` | Unique ID of the piece| Yes      |
 
-| Field             | Description                 | Required   |
-| ----------------- | --------------------------- | ---------- |
-| `x`        | Η  θέση x  στο board               | yes        |
-| `y`        | Η  θέση y  στο board               | yes        |
-| `piece_id` | Μοναδικός αριθμός Πιονιού          | yes        |
+#### **Player**
 
-
-
-### Player
-
-#### Ανάγνωση στοιχείων παικτών
+##### Get Player Details
 ```
 GET /players/
 ```
-Επιστρέφει τα στοιχεία των παίκτων του παιχνιδιού.
+Returns the details of all players in the game.
 
-
-
-
-#### Ανάγνωση στοιχείων παίκτη
+##### Get Player Login
 ```
 GET /players/login/
 ```
-Επιστρέφει τα στοιχεία του παίκτη .
+Returns the details of the logged-in player.
 
-
-#### Καθορισμός στοιχείων παίκτη
+##### Set Player Details
 ```
 PUT /players/login/
 ```
-Json Data:
+**JSON Data**:  
+| Field      | Description       | Required |
+|------------|-------------------|----------|
+| `username` | Player's username | Yes      |
 
-| Field             | Description                 | Required   |
-| ----------------- | --------------------------- | ---------- |
-| `username`        | Το username για τον παίκτη . | yes        |
+Returns the player's details and a token. The token must be used by the player for all actions during the game.
 
+#### **Status**
 
-Επιστρέφει τα στοιχεία του παίκτη και ένα token. Το token πρέπει να το χρησιμοποιεί ο παίκτης καθόλη τη διάρκεια του παιχνιδιού.
-
-### Status
-
-#### Ανάγνωση κατάστασης παιχνιδιού
+##### Get Game Status
 ```
 GET /status/
 ```
+Returns the [Game_status](#game_status).
 
-Επιστρέφει το στοιχείο [Game_status](#Game_status).
-
+---
 
 ## Entities
 
+### **Board**
+The board is a grid where each square has the following attributes:  
 
-### Board
----------
+| Attribute | Description                   | Values   |
+|-----------|-------------------------------|----------|
+| `x`       | X coordinate of the square    | 1..4     |
+| `y`       | Y coordinate of the square    | 1..4     |
+| `piece`   | Piece placed on the square    | 1..16 or null |
 
-Το board είναι ένας πίνακας, ο οποίος στο κάθε στοιχείο έχει τα παρακάτω:
+### **Pieces**
+Each piece has the following attributes:  
 
-| Attribute                | Description                                  | Values                              |
-| ------------------------ | -------------------------------------------- | --------------- |
-| `x`                      | H συντεταγμένη x του τετραγώνου              | 1..4            |                    
-| `y`                      | H συντεταγμένη y του τετραγώνου              | 1..4            |                   
-| `piece`                  | To Πιόνι που υπάρχει στο τετράγωνο           | 1...16, null    | 
+| Attribute   | Description                           | Values       |
+|-------------|---------------------------------------|--------------|
+| `piece_id`  | Unique ID                             | 1..16        |
+| `is_light`  | Whether the piece is light or dark    | TRUE, FALSE  |
+| `is_round`  | Whether the piece is round or square  | TRUE, FALSE  |
+| `is_short`  | Whether the piece is short or tall    | TRUE, FALSE  |
+| `is_solid`  | Whether the top is solid or hollow    | TRUE, FALSE  |
+| `available` | Whether the piece can be played       | TRUE, FALSE  |
 
+### **Players**
+Each player has the following attributes:  
 
-### Pieces
----------
+| Attribute     | Description                          | Values        |
+|---------------|--------------------------------------|---------------|
+| `player_id`   | Unique ID                            | INT INCREMENT |
+| `username`    | Username of the player               | String        |
+| `token`       | The player's hidden token            | HEX           |
+| `role`        | The current action for the player    | 'pick', 'place' |
+| `last_action` | Timestamp of the player's last move  | timestamp     |
 
-To κάθε κομμάτι έχει τα παρακάτω στοιχεία:
+### **Game_status**
+The game status includes the following attributes:  
 
-| Attribute                | Description                                  | Values                              |
-| ------------------------ | -------------------------------------------- | ----------------- |
-| `pieces_id` 			   | Μοναδικός  αριθμός						  | 1...16            |
-| `is_light`               | Άν είναι λευκό η μαύρο                       | TRUE','FALSE'     |                           
-| `is_round`               | Αν είναι στρόγγυλο η τετράγωνο              | TRUE','FALSE'     |
-| `is_short`               | Αν είναι κοντό η ψηλό                       |TRUE','FALSE'      |  
-| `is_solid`               | Αν έχει βαθουλωτή κορυφή ή συμπαγής κορυφή   | TRUE','FALSE'     |
-| `available`              | Είδος κίνησης που πρέπει να κάνει ο παίκτης  | 'TRUE','FALSE'    |
-
-
-
-### Players
----------
-
-O κάθε παίκτης έχει τα παρακάτω στοιχεία:
-
-| Attribute                | Description                                  | Values                              |
-| ------------------------ | -------------------------------------------- | ---------------------------- |
-|`player_id` 			   |Μόναδικος άυξων αριθμος 					  | ΙΝΤ INCREMENT                          |
-|`username`                | Όνομα παίκτη                                 | String                       |                        
-| `token  `                | To κρυφό token του παίκτη.                   | HEX                          |
-| `role`                   | Είδος κίνησης που πρέπει να κάνει ο παίκτης  | 'pick','place'               |
-| `last_action`            | Τελευταία αλλαγή/ενέργεια στην κατάσταση του παίκτη  | timestamp            |
-
-
-
-
-### Game_status
-----------------------------
-
-H κατάσταση παιχνιδιού έχει τα παρακάτω στοιχεία:
-
-| Attribute                | Description                                  | Values                              |
-| ------------------------ | -------------------------------------------- | -----------------------------|
-| `status  `               | Κατάσταση  | 'not active', 'initialized', 'started', 'ended', 'aborded'     |
-| `p_turn`                 | To token του παίκτη που παίζει                                | HEX         |
-|`current_piece`           | Δείχνει το επιλέγμενο πιόνι								   |1...16		 |
-| `result`                 | Καθοριστικό νίκης ή ισοπαλίας                                 |'W','D',null |
-| `win_direction`          | Καθορίζει την κατεύθυνση νίκης πάνω στο board		   |'not set','vertical+y','horisontal+x','left diagonal','right diagonal' (οπού x και y τελευταίες συντεταγμένες τοποθέτησης|
-| `last_change`            | Τελευταία αλλαγή/ενέργεια στην κατάσταση του παιχνιδιού       | timestamp   |
-
+| Attribute       | Description                                      | Values                              |
+|------------------|--------------------------------------------------|-------------------------------------|
+| `status`        | Current game state                               | 'not active', 'initialized', 'started', 'ended', 'aborted' |
+| `p_turn`        | Token of the player whose turn it is             | HEX                                |
+| `current_piece` | ID of the currently selected piece               | 1..16                              |
+| `result`        | Indicates the outcome of the game (win/draw)     | 'W', 'D', null                     |
+| `win_direction` | Direction of the winning row on the board        | 'not set', 'vertical+y', 'horizontal+x', 'left diagonal', 'right diagonal' (x, y = last placement coordinates) |
+| `last_change`   | Timestamp of the last game state update          | timestamp                          |
